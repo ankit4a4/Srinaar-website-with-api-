@@ -1,9 +1,10 @@
 import React from 'react'
-import JoinSection from '../../components/home/JoinSection'
+import Profile from '../../components/profile/Profile'
+
 const page = () => {
   return (
     <div>
-        <JoinSection />
+      <Profile />
     </div>
   )
 }

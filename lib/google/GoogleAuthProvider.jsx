@@ -11,19 +11,17 @@ const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 const GoogleAuthContext = createContext(null);
 
 export function GoogleAuthProvider({ children }) {
-  const [ready, setReady] = useState(false);
+  const [ready, setReady] = useState(() =>
+    typeof window !== "undefined" ? Boolean(window.google?.accounts?.id) : false
+  );
   const [error, setError] = useState("");
   const [signingIn, setSigningIn] = useState(false);
   const dispatch = useDispatch();
   const [googleLogin] = useGoogleLoginMutation();
 
-  // Load the Google Identity Services script once
+  // Load the Google Identity Services script once (skip if already present/loaded)
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (window.google?.accounts?.id) {
-      setReady(true);
-      return;
-    }
+    if (typeof window === "undefined" || window.google?.accounts?.id) return;
     const script = document.createElement("script");
     script.src = "https://accounts.google.com/gsi/client";
     script.async = true;
@@ -51,7 +49,7 @@ export function GoogleAuthProvider({ children }) {
           dispatch(setCredentials({ token: res.token, user: res.user }));
           dispatch(closeLoginPrompt());
         } catch (err) {
-          setError(err?.data?.message || "Login fail ho gaya, dubara try karo.");
+          setError(err?.data?.message || "Login failed, please try again.");
         } finally {
           setSigningIn(false);
         }

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useSubmitContactMessageMutation } from "@/lib/redux/api";
+import { notifySuccess, notifyError } from "@/lib/utils/notify";
 
 export default function ContactForm() {
   const [form, setForm] = useState({
@@ -12,19 +13,15 @@ export default function ContactForm() {
     message: "",
   });
   const [submitMessage, { isLoading }] = useSubmitContactMessageMutation();
-  const [status, setStatus] = useState(""); // '', 'success', 'error'
-  const [statusText, setStatusText] = useState("");
 
   const handleChange = (field) => (e) =>
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setStatus("");
 
     if (!form.name || !form.email || !form.message) {
-      setStatus("error");
-      setStatusText("Naam, email aur message bharna zaroori hai.");
+      notifyError("Please fill in your name, email and message.");
       return;
     }
 
@@ -39,12 +36,10 @@ export default function ContactForm() {
         message: form.message,
       }).unwrap();
 
-      setStatus("success");
-      setStatusText("Message bhej diya gaya! Hum jaldi contact karenge.");
+      notifySuccess("Your message has been sent! We will get back to you soon.");
       setForm({ name: "", email: "", occasion: "", budget: "", message: "" });
     } catch (err) {
-      setStatus("error");
-      setStatusText(err?.data?.message || "Kuch galat ho gaya, dubara try karo.");
+      notifyError(err?.data?.message || "Something went wrong, please try again.");
     }
   };
 
@@ -122,12 +117,6 @@ export default function ContactForm() {
               className="w-full border border-gray-300 rounded-lg px-5 py-3.5 text-base text-gray-700 placeholder:text-gray-400 outline-none focus:border-[#990027] focus:ring-2 focus:ring-[#990027]/20 transition-all duration-300 resize-none bg-white"
             ></textarea>
           </div>
-
-          {status && (
-            <p className={`mb-4 text-sm ${status === "success" ? "text-green-700" : "text-red-600"}`}>
-              {statusText}
-            </p>
-          )}
 
           <div className="flex justify-center md:justify-end">
             <button

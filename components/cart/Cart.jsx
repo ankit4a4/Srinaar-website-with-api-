@@ -1,6 +1,6 @@
 "use client";
 
-import { FiMinus, FiPlus, FiX } from "react-icons/fi";
+import { FiMinus, FiPlus, FiX, FiLoader } from "react-icons/fi";
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useSelector } from "react-redux";
@@ -12,6 +12,7 @@ import {
 } from "@/lib/redux/api";
 import { selectIsLoggedIn } from "@/lib/redux/authSlice";
 import { useRequireAuth } from "@/lib/redux/useRequireAuth";
+import { notifySuccess, notifyError, notifyInfo } from "@/lib/utils/notify";
 
 export default function Cart() {
   const isLoggedIn = useSelector(selectIsLoggedIn);
@@ -19,21 +20,44 @@ export default function Cart() {
   const { data: cart, isLoading } = useGetCartQuery(undefined, { skip: !isLoggedIn });
   const [updateCartItem] = useUpdateCartItemMutation();
   const [removeCartItem] = useRemoveCartItemMutation();
-  const [checkoutMsg, setCheckoutMsg] = useState("");
+  const [pendingItemId, setPendingItemId] = useState(null);
+  const [removingItemId, setRemovingItemId] = useState(null);
 
   const cartItems = cart?.items || [];
 
-  const handleIncrease = (item) => {
-    updateCartItem({ itemId: item._id, quantity: item.quantity + 1 });
+  const handleIncrease = async (item) => {
+    setPendingItemId(item._id);
+    try {
+      await updateCartItem({ itemId: item._id, quantity: item.quantity + 1 }).unwrap();
+    } catch (err) {
+      notifyError(err?.data?.message || "Could not update quantity.");
+    } finally {
+      setPendingItemId(null);
+    }
   };
 
-  const handleDecrease = (item) => {
+  const handleDecrease = async (item) => {
     if (item.quantity <= 1) return;
-    updateCartItem({ itemId: item._id, quantity: item.quantity - 1 });
+    setPendingItemId(item._id);
+    try {
+      await updateCartItem({ itemId: item._id, quantity: item.quantity - 1 }).unwrap();
+    } catch (err) {
+      notifyError(err?.data?.message || "Could not update quantity.");
+    } finally {
+      setPendingItemId(null);
+    }
   };
 
-  const handleRemove = (item) => {
-    removeCartItem(item._id);
+  const handleRemove = async (item) => {
+    setRemovingItemId(item._id);
+    try {
+      await removeCartItem(item._id).unwrap();
+      notifySuccess("Removed from cart");
+    } catch (err) {
+      notifyError(err?.data?.message || "Could not remove item.");
+    } finally {
+      setRemovingItemId(null);
+    }
   };
 
   const summary = useMemo(() => {
@@ -54,7 +78,7 @@ export default function Cart() {
 
   const handleCheckout = () => {
     requireAuth(() => {
-      setCheckoutMsg("Checkout aur payment (Razorpay) ka setup jaldi aa raha hai!");
+      notifyInfo("Checkout and payment (Razorpay) integration is coming soon!");
     });
   };
 
@@ -62,8 +86,8 @@ export default function Cart() {
     return (
       <section className="py-12 md:py-16">
         <div className="mx-auto max-w-2xl px-4 text-center">
-          <h3 className="text-2xl font-semibold text-[#2a1a14]">Login karo pehle</h3>
-          <p className="mt-2 text-[#8b6f63]">Apna cart dekhne ke liye Google se sign in karo.</p>
+          <h3 className="text-2xl font-semibold text-[#2a1a14]">Please sign in</h3>
+          <p className="mt-2 text-[#8b6f63]">Sign in with Google to view your cart.</p>
           <button
             onClick={() => requireAuth(() => {})}
             className="mt-6 rounded-full bg-[#990027] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#7f0021]"
@@ -92,7 +116,17 @@ export default function Cart() {
             {/* Items */}
             <div className="px-4 md:px-6">
               {isLoading && (
-                <p className="py-10 text-center text-[#8b6f63]">Loading cart…</p>
+                <div className="space-y-5 py-2">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="flex animate-pulse items-center gap-4 py-3">
+                      <div className="h-20 w-16 rounded-xl bg-[#f3ece6] sm:h-24 sm:w-20" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 w-2/3 rounded bg-[#f3ece6]" />
+                        <div className="h-3 w-1/3 rounded bg-[#f3ece6]" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
 
               {!isLoading && cartItems.length > 0 ? (
@@ -107,9 +141,14 @@ export default function Cart() {
                     <div className="flex gap-4">
                       <button
                         onClick={() => handleRemove(item)}
-                        className="mt-1 h-9 w-9 shrink-0 rounded-full border border-[#e9d8d0] text-[#4b1e1e] transition hover:border-[#990027] hover:bg-[#fff4f7] hover:text-[#990027]"
+                        disabled={removingItemId === item._id}
+                        className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#e9d8d0] text-[#4b1e1e] transition hover:border-[#990027] hover:bg-[#fff4f7] hover:text-[#990027] disabled:opacity-50"
                       >
-                        <FiX className="mx-auto text-[16px]" />
+                        {removingItemId === item._id ? (
+                          <FiLoader className="animate-spin text-[14px]" />
+                        ) : (
+                          <FiX className="text-[16px]" />
+                        )}
                       </button>
 
                       <div className="flex min-w-0 items-center gap-4">
@@ -149,18 +188,24 @@ export default function Cart() {
                       <div className="flex w-fit items-center rounded-full border border-[#eadfd7] bg-white p-1 shadow-sm">
                         <button
                           onClick={() => handleDecrease(item)}
-                          className="flex h-9 w-9 items-center justify-center rounded-full text-[#4b1e1e] transition hover:bg-[#fff4f7] hover:text-[#990027]"
+                          disabled={pendingItemId === item._id}
+                          className="flex h-9 w-9 items-center justify-center rounded-full text-[#4b1e1e] transition hover:bg-[#fff4f7] hover:text-[#990027] disabled:opacity-40"
                         >
                           <FiMinus />
                         </button>
 
-                        <span className="min-w-[34px] text-center text-sm font-semibold text-[#2a1a14]">
-                          {item.quantity}
+                        <span className="flex min-w-[34px] items-center justify-center text-center text-sm font-semibold text-[#2a1a14]">
+                          {pendingItemId === item._id ? (
+                            <FiLoader className="animate-spin text-[14px]" />
+                          ) : (
+                            item.quantity
+                          )}
                         </span>
 
                         <button
                           onClick={() => handleIncrease(item)}
-                          className="flex h-9 w-9 items-center justify-center rounded-full text-[#4b1e1e] transition hover:bg-[#fff4f7] hover:text-[#990027]"
+                          disabled={pendingItemId === item._id}
+                          className="flex h-9 w-9 items-center justify-center rounded-full text-[#4b1e1e] transition hover:bg-[#fff4f7] hover:text-[#990027] disabled:opacity-40"
                         >
                           <FiPlus />
                         </button>
@@ -225,10 +270,6 @@ export default function Cart() {
               <span className="text-base font-semibold text-[#2a1a14]">Total</span>
               <span className="text-2xl font-bold text-[#990027]">{formatPrice(summary.total)}</span>
             </div>
-
-            {checkoutMsg && (
-              <p className="mt-4 text-sm text-[#990027]">{checkoutMsg}</p>
-            )}
 
             <button
               onClick={handleCheckout}

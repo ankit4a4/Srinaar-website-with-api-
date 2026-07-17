@@ -1,18 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { FiHeart, FiX } from "react-icons/fi";
-import Link from "next/link";
-import { useSelector } from "react-redux";
-import {
-  useGetProductsQuery,
-  useGetCategoriesQuery,
-  useAddToWishlistMutation,
-  useGetWishlistQuery,
-  fileUrl,
-} from "@/lib/redux/api";
-import { selectIsLoggedIn } from "@/lib/redux/authSlice";
-import { useRequireAuth } from "@/lib/redux/useRequireAuth";
+import { FiX } from "react-icons/fi";
+import { useGetProductsQuery, useGetCategoriesQuery } from "@/lib/redux/api";
+import ProductCard from "@/components/common/ProductCard";
+import ProductCardSkeleton from "@/components/common/ProductCardSkeleton";
 
 const MAX_PRICE = 20000;
 
@@ -36,13 +28,8 @@ export default function ShopProducts({ initialCategory = "" }) {
     limit: 100,
   });
 
-  const isLoggedIn = useSelector(selectIsLoggedIn);
-  const requireAuth = useRequireAuth();
-  const [addToWishlist] = useAddToWishlistMutation();
-  const { data: wishlist } = useGetWishlistQuery(undefined, { skip: !isLoggedIn });
-  const wishlistIds = new Set((wishlist?.products || []).map((p) => p._id));
-
   const products = productsData?.products || [];
+
 
   // Flatten main + sub categories into a single filterable list
   const categoryOptions = useMemo(() => {
@@ -116,12 +103,6 @@ export default function ShopProducts({ initialCategory = "" }) {
     } else {
       setFilters((prev) => ({ ...prev, [type]: prev[type].filter((i) => i !== value) }));
     }
-  };
-
-  const handleWishlist = (e, productId) => {
-    e.preventDefault();
-    e.stopPropagation();
-    requireAuth(() => addToWishlist(productId));
   };
 
   return (
@@ -285,60 +266,19 @@ export default function ShopProducts({ initialCategory = "" }) {
               </div>
             </div>
 
-            {isLoading && (
-              <div className="py-16 text-center text-[#8a776f]">Loading products…</div>
-            )}
-
             {isError && (
               <div className="py-16 text-center text-red-600">
-                Products load nahi ho paye. Backend chal raha hai check karo.
+                Could not load products. Please check your connection and try again.
               </div>
             )}
 
             {/* PRODUCTS */}
             <div className="grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-3">
+              {isLoading &&
+                Array.from({ length: 6 }).map((_, i) => <ProductCardSkeleton key={i} />)}
+
               {filteredProducts.map((product) => (
-                <Link key={product._id} href={`/singleproduct/${product._id}`} className="group block">
-                  <div className="overflow-hidden">
-                    <div className="relative h-[350px] md:h-[340px] overflow-hidden bg-[#f6f1ed] sm:h-[350px] lg:h-[400px]">
-                      <img
-                        src={fileUrl(product.images?.[0]) || "https://placehold.co/600x800?text=Srinaar"}
-                        alt={product.name}
-                        className="absolute inset-0 h-full w-full object-cover object-top transition duration-700 ease-out group-hover:scale-[1.06]"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent opacity-0 transition duration-500 group-hover:opacity-100" />
-
-                      <button
-                        type="button"
-                        onClick={(e) => handleWishlist(e, product._id)}
-                        className={`absolute bottom-3 right-3 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-[0_8px_25px_rgba(0,0,0,0.18)] transition-all duration-300 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 hover:scale-110 hover:bg-[#7f1026] hover:text-white sm:h-11 sm:w-11 ${
-                          wishlistIds.has(product._id) ? "text-[#7f1026]" : "text-[#7f1026]"
-                        }`}
-                      >
-                        <FiHeart className="text-[18px]" fill={wishlistIds.has(product._id) ? "currentColor" : "none"} />
-                      </button>
-                    </div>
-
-                    <div className="px-1 pt-4">
-                      <p className="mb-1 text-[11px] font-medium uppercase tracking-[0.2em] text-[#9a9a9a]">
-                        {product.category?.name}
-                      </p>
-                      <h3 className="line-clamp-2 min-h-[48px] font-serif text-[16px] leading-[1.4] text-[#1f1f1f] transition-colors duration-300 group-hover:text-[#7f1026] sm:text-[18px]">
-                        {product.name}
-                      </h3>
-                      <div className="mt-3 flex items-end gap-2">
-                        <span className="text-[22px] font-semibold leading-none text-[#1f1f1f] sm:text-[26px]">
-                          ₹{product.price?.toLocaleString("en-IN")}
-                        </span>
-                        {product.oldPrice && (
-                          <span className="pb-[2px] text-[13px] text-[#9a9a9a] line-through">
-                            ₹{product.oldPrice.toLocaleString("en-IN")}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </Link>
+                <ProductCard key={product._id} product={product} />
               ))}
             </div>
 

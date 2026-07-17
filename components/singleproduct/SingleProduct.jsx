@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   FiTruck,
@@ -8,6 +8,7 @@ import {
   FiShield,
   FiChevronDown,
   FiChevronUp,
+  FiLoader,
 } from "react-icons/fi";
 import {
   useGetProductQuery,
@@ -16,6 +17,8 @@ import {
   fileUrl,
 } from "@/lib/redux/api";
 import { useRequireAuth } from "@/lib/redux/useRequireAuth";
+import { trackProductView } from "@/lib/utils/recentlyViewed";
+import { notifySuccess, notifyError } from "@/lib/utils/notify";
 
 const features = [
   { icon: FiTruck, text: "Free Shipping" },
@@ -35,23 +38,29 @@ const SingleProduct = ({ productId }) => {
   const [selectedColor, setSelectedColor] = useState(null);
   const [showSizeGuide, setShowSizeGuide] = useState(false);
   const [qty] = useState(1);
-  const [addedMsg, setAddedMsg] = useState("");
 
   const requireAuth = useRequireAuth();
   const [addToCart, { isLoading: addingToCart }] = useAddToCartMutation();
-  const [addToWishlist] = useAddToWishlistMutation();
+  const [addToWishlist, { isLoading: addingToWishlist }] = useAddToWishlistMutation();
+
+  useEffect(() => {
+    if (product?._id) trackProductView(product._id);
+  }, [product?._id]);
 
   // Derive the "active" selections from state, falling back to the product's
   // first option — avoids syncing state from the query result in an effect.
   const images = (product?.images || []).map((img) => fileUrl(img));
   const activeImage = selectedImage || images[0] || null;
   const activeSize = selectedSize || product?.sizes?.[0] || "";
-  const activeColor = selectedColor || product?.colors?.[0] || "";
+  const firstColor = product?.colors?.[0];
+  const firstColorValue =
+    typeof firstColor === "object" && firstColor !== null ? firstColor.value : firstColor;
+  const activeColor = selectedColor || firstColorValue || "";
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#ece7dd] px-4 py-16 text-center text-[#8a776f]">
-        Product load ho raha hai…
+        Loading product…
       </div>
     );
   }
@@ -59,7 +68,7 @@ const SingleProduct = ({ productId }) => {
   if (isError || !product) {
     return (
       <div className="min-h-screen bg-[#ece7dd] px-4 py-16 text-center text-[#8a776f]">
-        Ye product nahi mila.
+        This product could not be found.
       </div>
     );
   }
@@ -73,10 +82,9 @@ const SingleProduct = ({ productId }) => {
           size: activeSize,
           color: activeColor,
         }).unwrap();
-        setAddedMsg("Cart me add ho gaya!");
-        setTimeout(() => setAddedMsg(""), 2000);
+        notifySuccess("Added to cart!");
       } catch (err) {
-        setAddedMsg(err?.data?.message || "Kuch galat ho gaya");
+        notifyError(err?.data?.message || "Something went wrong. Please try again.");
       }
     });
   };
@@ -91,14 +99,21 @@ const SingleProduct = ({ productId }) => {
           color: activeColor,
         }).unwrap();
         router.push("/cart");
-      } catch {
-        // silent — cart page will reflect the current (possibly unchanged) state
+      } catch (err) {
+        notifyError(err?.data?.message || "Something went wrong. Please try again.");
       }
     });
   };
 
   const handleWishlist = () => {
-    requireAuth(() => addToWishlist(product._id));
+    requireAuth(async () => {
+      try {
+        await addToWishlist(product._id).unwrap();
+        notifySuccess("Added to wishlist!");
+      } catch (err) {
+        notifyError(err?.data?.message || "Something went wrong. Please try again.");
+      }
+    });
   };
 
   return (
@@ -208,15 +223,14 @@ const SingleProduct = ({ productId }) => {
             )}
 
             {/* BUTTONS */}
-            {addedMsg && (
-              <p className="mt-4 text-sm font-medium text-[#7f1026]">{addedMsg}</p>
-            )}
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-              <button className="btn-primary" onClick={handleBuyNow} disabled={addingToCart || product.stock === 0}>
+              <button className="btn-primary flex items-center justify-center gap-2" onClick={handleBuyNow} disabled={addingToCart || product.stock === 0}>
+                {addingToCart && <FiLoader className="animate-spin text-[15px]" />}
                 <span>Buy Now</span>
               </button>
 
-              <button className="btn-primary3" onClick={handleAddToCart} disabled={addingToCart || product.stock === 0}>
+              <button className="btn-primary3 flex items-center justify-center gap-2" onClick={handleAddToCart} disabled={addingToCart || product.stock === 0}>
+                {addingToCart && <FiLoader className="animate-spin text-[15px]" />}
                 <span>{addingToCart ? "Adding…" : "Add To Cart"}</span>
               </button>
             </div>
@@ -224,22 +238,41 @@ const SingleProduct = ({ productId }) => {
             {/* COLOR */}
             {product.colors?.length > 0 && (
               <div className="mt-7">
-                <div className="flex items-center gap-4">
-                  <span className="text-base text-[#4a3730] md:text-[17px]">Color</span>
+                <div className="flex items-start gap-4">
+                  <span className="pt-1 text-base text-[#4a3730] md:text-[17px]">Color</span>
 
-                  <div className="flex items-center gap-3">
-                    {product.colors.map((color, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setSelectedColor(color)}
-                        className={`h-[18px] w-[18px] rounded-full transition hover:scale-110 md:h-[20px] md:w-[20px] ${
-                          activeColor === color
-                            ? "ring-2 ring-[#9f2635] ring-offset-2 ring-offset-[#ece7dd]"
-                            : "border border-[#c9bcae]"
-                        }`}
-                        style={{ backgroundColor: color }}
-                      />
-                    ))}
+                  <div className="flex flex-wrap items-center gap-3">
+                    {product.colors.map((colorItem, index) => {
+                      // Supports plain hex/name strings (current backend) as well as
+                      // { value, image } variants (planned) — image swatch takes priority.
+                      const isVariant = typeof colorItem === "object" && colorItem !== null;
+                      const value = isVariant ? colorItem.value : colorItem;
+                      const image = isVariant ? fileUrl(colorItem.image) : null;
+                      const isActive = activeColor === value;
+
+                      return (
+                        <button
+                          key={index}
+                          onClick={() => {
+                            setSelectedColor(value);
+                            if (image) setSelectedImage(image);
+                          }}
+                          title={value}
+                          className={`overflow-hidden rounded-full transition hover:scale-110 ${
+                            image ? "h-[34px] w-[34px]" : "h-[20px] w-[20px]"
+                          } ${
+                            isActive
+                              ? "ring-2 ring-[#9f2635] ring-offset-2 ring-offset-[#ece7dd]"
+                              : "border border-[#c9bcae]"
+                          }`}
+                          style={!image ? { backgroundColor: value } : undefined}
+                        >
+                          {image && (
+                            <img src={image} alt={value} className="h-full w-full object-cover" />
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
@@ -249,8 +282,10 @@ const SingleProduct = ({ productId }) => {
               <button
                 type="button"
                 onClick={handleWishlist}
-                className="text-sm text-[#8a776f] underline underline-offset-2"
+                disabled={addingToWishlist}
+                className="flex items-center gap-2 text-sm text-[#8a776f] underline underline-offset-2"
               >
+                {addingToWishlist && <FiLoader className="animate-spin text-[13px]" />}
                 + Add to Wishlist
               </button>
             </div>

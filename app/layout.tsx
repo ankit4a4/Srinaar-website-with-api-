@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import "react-toastify/dist/ReactToastify.css";
+import { ToastContainer } from "react-toastify";
 import Header from "../components/layout/Header";
 import Footer from "../components/layout/Footer";
 import ReduxProvider from "@/lib/redux/ReduxProvider";
@@ -38,6 +40,7 @@ export default function RootLayout({
             {children}
             <Footer />
             <LoginPromptModal />
+            <ToastContainer />
           </GoogleAuthProvider>
         </ReduxProvider>
       </body>

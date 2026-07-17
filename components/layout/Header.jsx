@@ -12,12 +12,13 @@ import {
   FiX,
   FiChevronDown,
   FiChevronUp,
+  FiChevronRight,
 } from "react-icons/fi";
 import Image from "next/image";
 import logo from "../../assets/logo.png";
 import logo2 from "../../assets/logo2.png";
 import { useSelector } from "react-redux";
-import { useGetCategoriesQuery } from "@/lib/redux/api";
+import { useGetCategoriesQuery, useGetCartQuery } from "@/lib/redux/api";
 import { selectIsLoggedIn, selectUser } from "@/lib/redux/authSlice";
 
 const staticMenuItems = [
@@ -30,7 +31,6 @@ const staticEndItems = [
   { name: "Contact", link: "/contact" },
 ];
 
-// Icon links array - sab links yahan se manage honge
 const iconLinks = {
   wishlist: "/wishlist",
   cart: "/cart",
@@ -40,17 +40,30 @@ const menuClass =
   "relative cursor-pointer after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:transition-all after:duration-300 hover:after:w-full";
 
 /**
- * Mega dropdown for "Collections" — built from live backend categories.
- * Each main category becomes a column; its subcategories are listed below it.
+ * Classic two-level dropdown for "Collections":
+ * - Opens directly below the nav item
+ * - Lists main categories vertically
+ * - Hovering a main category flies out its subcategories to the right
  */
 function CollectionsDropdown({ open, setOpen, categories, loading, textColor, underlineColor }) {
+  const [manualActiveMain, setManualActiveMain] = useState(null);
   const hasCategories = categories && categories.length > 0;
+
+  // Default to the first category until the user hovers a different one —
+  // avoids syncing state from a prop/derived value inside an effect.
+  const activeMain = open ? manualActiveMain ?? categories?.[0]?._id ?? null : null;
+  const currentMain = categories?.find((c) => c._id === activeMain);
+
+  const handleClose = () => {
+    setOpen(false);
+    setManualActiveMain(null);
+  };
 
   return (
     <div
       className="relative"
       onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
+      onMouseLeave={handleClose}
     >
       <button className={`${menuClass} ${underlineColor} flex items-center gap-1 ${textColor}`}>
         Collections
@@ -58,57 +71,53 @@ function CollectionsDropdown({ open, setOpen, categories, loading, textColor, un
       </button>
 
       <div
-        className={`absolute top-full left-1/2 -translate-x-1/2 pt-4 transition-all duration-300 ${
-          open ? "opacity-100 visible translate-y-0" : "opacity-0 invisible translate-y-3"
+        className={`absolute top-full left-0 pt-3 transition-all duration-200 ${
+          open ? "visible translate-y-0 opacity-100" : "invisible -translate-y-2 opacity-0"
         }`}
       >
-        <div className="min-w-[520px] max-w-[720px] rounded-2xl border border-black/10 bg-white p-6 shadow-[0_20px_50px_rgba(0,0,0,0.18)]">
-          {loading && (
-            <p className="px-2 text-sm text-[#8a776f]">Loading collections…</p>
-          )}
+        <div className="flex overflow-hidden rounded-xl border border-black/10 bg-white shadow-[0_20px_50px_rgba(0,0,0,0.18)]">
+          {/* LEFT: main categories */}
+          <div className="w-[220px] border-r border-black/5 py-2">
+            {loading && (
+              <p className="px-5 py-3 text-sm text-[#8a776f]">Loading…</p>
+            )}
 
-          {!loading && !hasCategories && (
-            <p className="px-2 text-sm text-[#8a776f]">Koi category abhi nahi hai.</p>
-          )}
+            {!loading && !hasCategories && (
+              <p className="px-5 py-3 text-sm text-[#8a776f]">No categories yet.</p>
+            )}
 
-          {!loading && hasCategories && (
-            <div className="grid grid-cols-2 gap-x-8 gap-y-6 md:grid-cols-3">
-              {categories.map((main) => (
-                <div key={main._id}>
-                  <Link
-                    href={`/collection/${main._id}`}
-                    className="mb-2 block font-serif text-[16px] text-[#7f1026] hover:underline"
-                  >
-                    {main.name}
-                  </Link>
+            {!loading &&
+              categories?.map((main) => (
+                <Link
+                  key={main._id}
+                  href={`/collection/${main._id}`}
+                  onMouseEnter={() => setManualActiveMain(main._id)}
+                  className={`flex items-center justify-between px-5 py-3 text-[14px] transition-colors ${
+                    activeMain === main._id
+                      ? "bg-[#f6f1ed] text-[#7f1026] font-medium"
+                      : "text-[#2d2d2d] hover:bg-[#f6f1ed] hover:text-[#7f1026]"
+                  }`}
+                >
+                  <span>{main.name}</span>
+                  {main.subCategories?.length > 0 && <FiChevronRight className="text-[12px]" />}
+                </Link>
+              ))}
+          </div>
 
-                  <div className="flex flex-col gap-1.5">
-                    {(main.subCategories || []).map((sub) => (
-                      <Link
-                        key={sub._id}
-                        href={`/collection/${sub._id}`}
-                        className="rounded-lg px-2 py-1.5 text-[13.5px] text-[#333] transition-all duration-200 hover:bg-[#f6f1ed] hover:text-[#7f1026] hover:pl-3"
-                      >
-                        {sub.name}
-                      </Link>
-                    ))}
-                    {(!main.subCategories || main.subCategories.length === 0) && (
-                      <span className="px-2 text-[12px] text-[#b3b3b3]">No sub-categories</span>
-                    )}
-                  </div>
-                </div>
+          {/* RIGHT: subcategories flyout */}
+          {currentMain?.subCategories?.length > 0 && (
+            <div className="w-[220px] py-2">
+              {currentMain.subCategories.map((sub) => (
+                <Link
+                  key={sub._id}
+                  href={`/collection/${sub._id}`}
+                  className="block px-5 py-2.5 text-[13.5px] text-[#333] transition-colors hover:bg-[#f6f1ed] hover:text-[#7f1026]"
+                >
+                  {sub.name}
+                </Link>
               ))}
             </div>
           )}
-
-          <div className="mt-5 border-t border-black/5 pt-4 text-center">
-            <Link
-              href="/shop"
-              className="text-[13px] font-medium text-[#7f1026] hover:underline"
-            >
-              View All Products →
-            </Link>
-          </div>
         </div>
       </div>
     </div>
@@ -127,12 +136,26 @@ function ProfileDropdown({ iconColor = "text-white" }) {
   );
 }
 
+function CartIcon({ count, className = "text-xl text-white" }) {
+  return (
+    <Link href={iconLinks.cart} className="relative inline-flex">
+      <FiShoppingBag className={`cursor-pointer ${className}`} />
+      {count > 0 && (
+        <span className="absolute -right-2 -top-2 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#c9a227] px-1 text-[10px] font-semibold leading-none text-white shadow">
+          {count > 9 ? "9+" : count}
+        </span>
+      )}
+    </Link>
+  );
+}
+
 function DesktopNav({
   collectionsOpen,
   setCollectionsOpen,
   categories,
   categoriesLoading,
   isTransparentState,
+  cartCount,
 }) {
   return (
     <div className="hidden md:flex items-center justify-between gap-6">
@@ -194,15 +217,13 @@ function DesktopNav({
 
         <ProfileDropdown iconColor="text-white" />
 
-        <Link href={iconLinks.cart}>
-          <FiShoppingBag className="text-xl cursor-pointer text-white" />
-        </Link>
+        <CartIcon count={cartCount} />
       </div>
     </div>
   );
 }
 
-function MobileTopBar({ setMobileMenu, isTransparentState }) {
+function MobileTopBar({ setMobileMenu, isTransparentState, cartCount }) {
   return (
     <div className="flex md:hidden items-center justify-between text-white">
       <FiMenu className="text-2xl cursor-pointer" onClick={() => setMobileMenu(true)} />
@@ -216,9 +237,7 @@ function MobileTopBar({ setMobileMenu, isTransparentState }) {
         />
       </Link>
 
-      <Link href={iconLinks.cart}>
-        <FiShoppingBag className="text-xl" />
-      </Link>
+      <CartIcon count={cartCount} />
     </div>
   );
 }
@@ -230,6 +249,7 @@ function HeaderContent({
   categoriesLoading,
   setMobileMenu,
   isTransparentState,
+  cartCount,
 }) {
   return (
     <div className="px-4 lg:px-6">
@@ -239,8 +259,13 @@ function HeaderContent({
         categories={categories}
         categoriesLoading={categoriesLoading}
         isTransparentState={isTransparentState}
+        cartCount={cartCount}
       />
-      <MobileTopBar setMobileMenu={setMobileMenu} isTransparentState={isTransparentState} />
+      <MobileTopBar
+        setMobileMenu={setMobileMenu}
+        isTransparentState={isTransparentState}
+        cartCount={cartCount}
+      />
     </div>
   );
 }
@@ -258,6 +283,8 @@ export default function Header() {
   const { data: categories, isLoading: categoriesLoading } = useGetCategoriesQuery();
   const isLoggedIn = useSelector(selectIsLoggedIn);
   const user = useSelector(selectUser);
+  const { data: cart } = useGetCartQuery(undefined, { skip: !isLoggedIn });
+  const cartCount = (cart?.items || []).reduce((sum, item) => sum + item.quantity, 0);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 80);
@@ -283,6 +310,7 @@ export default function Header() {
               categoriesLoading={categoriesLoading}
               setMobileMenu={setMobileMenu}
               isTransparentState={isTransparentState}
+              cartCount={cartCount}
             />
           </div>
         </div>
@@ -303,6 +331,7 @@ export default function Header() {
               categoriesLoading={categoriesLoading}
               setMobileMenu={setMobileMenu}
               isTransparentState={false}
+              cartCount={cartCount}
             />
           </div>
         </div>

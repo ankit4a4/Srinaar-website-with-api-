@@ -169,13 +169,13 @@ export default function JoinSection() {
                         <button
                           type="button"
                           disabled
-                          title="Abhi sirf Google se sign in available hai"
+                          title="Only Google sign-in is available right now"
                           className="h-[42px] w-full cursor-not-allowed rounded-[6px] bg-[#980022]/40 text-[14px] font-medium text-white"
                         >
                           Sign In
                         </button>
                         <p className="text-center text-[11px] text-[#999]">
-                          Abhi sirf Google se sign in available hai — neeche se karo
+                          Only Google sign-in is available right now — use the button below
                         </p>
                       </div>
                     ) : (
@@ -219,13 +219,13 @@ export default function JoinSection() {
                         <button
                           type="button"
                           disabled
-                          title="Abhi sirf Google se sign up available hai"
+                          title="Only Google sign-up is available right now"
                           className="h-[42px] w-full cursor-not-allowed rounded-[6px] bg-[#980022]/40 text-[14px] font-medium text-white"
                         >
                           Create Account
                         </button>
                         <p className="text-center text-[11px] text-[#999]">
-                          Abhi sirf Google se sign up available hai — neeche se karo
+                          Only Google sign-up is available right now — use the button below
                         </p>
                       </div>
                     )}

@@ -72,4 +72,21 @@ lib/google/
   `lib/redux/api.js` me) — plain `<img>` tags use kiye hain instead of `next/image` kyunki backend host
   arbitrary ho sakta hai.
 - Fonts Google Fonts se build time pe fetch hoti hain (`next/font`) — build machine par internet chahiye.
-# Srinaar-website-with-api-
+
+## Update — Round 2 fixes
+
+- **Header dropdown** — rebuilt as a classic two-level dropdown: main categories open directly below "Collections", hover a main category to fly out its subcategories to the right. "View All Products" link removed.
+- **Cart badge** — the cart icon in the header now shows a live item count (desktop + mobile).
+- **Consistent product cards** — every product grid (home, shop, wishlist, recently viewed, "you may also like") now uses one shared `components/common/ProductCard.jsx`.
+- **All UI text in English.**
+- **Toast notifications** (`react-toastify`) — add to cart, wishlist, contact form, and order actions all show a proper toast instead of inline text. Styled to match the brand (`lib/utils/notify.js`).
+- **Inline loaders, not full-page spinners** — every action button (add to cart, wishlist heart, quantity +/-, remove) shows a small spinner while its request is in flight. Product grids show skeleton placeholders while loading instead of a blocking page-level loader.
+- **Recently Viewed** — tracked in `localStorage` (`lib/utils/recentlyViewed.js`); shows the user's real recently-viewed products once they've viewed something, and falls back to the latest products before that.
+- **Profile page** (`/profile`) — full account dashboard: profile details form (first/last name, email, phone, birthday, gender), My Orders, My Wishlist, Recently Viewed, and placeholders for Delivery Address / Loyalty Points (not built on the backend yet) and Change Password (not applicable — Google-only login).
+- **Product colors** — swatches now support both today's plain color/hex strings *and* a future `{ value, image }` shape per color. When an image is provided, clicking that swatch also updates the main product photo on the single-product page.
+
+### Backend fields this will need later (when you hand over the backend code again)
+
+- `User`: `dob`, `gender` (profile form already sends these; harmless no-ops until the schema/route accepts them)
+- `Product.colors`: optionally support `[{ value, image }]` instead of plain strings, to enable the image-swatch feature
+- Nothing else changed on the API contract — all existing endpoints are used as-is.

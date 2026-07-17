@@ -24,9 +24,9 @@ export default function LoginPromptModal() {
           <FiX size={20} />
         </button>
 
-        <h3 className="font-serif text-2xl text-[#8f0b24]">Login zaroori hai</h3>
+        <h3 className="font-serif text-2xl text-[#8f0b24]">Sign in required</h3>
         <p className="mt-2 text-sm text-[#666]">
-          Cart, wishlist aur order ke liye pehle Google se sign in karo.
+          Please sign in with Google to use your cart, wishlist and orders.
         </p>
 
         {ctx?.error && <p className="mt-3 text-sm text-red-600">{ctx.error}</p>}
