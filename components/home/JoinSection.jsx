@@ -5,10 +5,9 @@ import { HiOutlineMail, HiOutlineLockClosed } from "react-icons/hi";
 import { FiUser } from "react-icons/fi";
 import { AnimatePresence, motion } from "framer-motion";
 import modelImg from "../../assets/home/collection.png";
-import { useSelector, useDispatch } from "react-redux";
-import { selectIsLoggedIn, selectUser, logout } from "@/lib/redux/authSlice";
+import { useSelector } from "react-redux";
+import { selectIsLoggedIn } from "@/lib/redux/authSlice";
 import { useGoogleButton } from "@/lib/google/GoogleAuthProvider";
-import { useGetMyOrdersQuery } from "@/lib/redux/api";
 
 export default function JoinSection() {
   const [activeTab, setActiveTab] = useState("login");
@@ -16,8 +15,6 @@ export default function JoinSection() {
 
   const isLogin = activeTab === "login";
   const isLoggedIn = useSelector(selectIsLoggedIn);
-  const user = useSelector(selectUser);
-  const dispatch = useDispatch();
   const googleButtonRef = useGoogleButton({ width: 240 });
 
   const handleTabChange = (tab) => {
@@ -77,7 +74,7 @@ export default function JoinSection() {
   };
 
   if (isLoggedIn) {
-    return <LoggedInCard user={user} dispatch={dispatch} />;
+    return null;
   }
 
   return (
@@ -298,49 +295,6 @@ export default function JoinSection() {
         <p className="mt-5 text-[12px] text-[#6f6f6f]">
           By continuing, you agree to our terms and privacy policy.
         </p>
-      </div>
-    </section>
-  );
-}
-function LoggedInCard({ user, dispatch }) {
-  const { data: orders, isLoading } = useGetMyOrdersQuery();
-
-  return (
-    <section className="py-16 px-4 sm:px-6">
-      <div className="mx-auto max-w-2xl rounded-[18px] border border-[#e5dfd6] bg-[#f7f7f7] p-10 text-center shadow-[0_18px_45px_rgba(0,0,0,0.08)]">
-        <h2 className="font-serif text-3xl text-[#8f0b24]">
-          Welcome back, {user?.name?.split(" ")[0] || "there"}!
-        </h2>
-        <p className="mt-2 text-sm text-[#666]">{user?.email}</p>
-
-        <button
-          onClick={() => dispatch(logout())}
-          className="mt-6 rounded-[6px] border border-[#980022] px-6 py-2.5 text-sm font-medium text-[#980022] transition hover:bg-[#980022] hover:text-white"
-        >
-          Logout
-        </button>
-
-        {!isLoading && orders?.length > 0 && (
-          <div className="mt-10 text-left">
-            <h3 className="mb-4 text-center font-serif text-xl text-[#2a1a14]">
-              Recent Orders
-            </h3>
-            <div className="space-y-3">
-              {orders.slice(0, 3).map((order) => (
-                <div
-                  key={order._id}
-                  className="flex items-center justify-between rounded-[10px] border border-[#eadfd7] bg-white px-4 py-3 text-sm"
-                >
-                  <span className="font-medium text-[#2a1a14]">{order.orderId}</span>
-                  <span className="text-[#8b6f63]">{order.status}</span>
-                  <span className="font-semibold text-[#990027]">
-                    ₹{order.amount?.toLocaleString("en-IN")}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </section>
   );

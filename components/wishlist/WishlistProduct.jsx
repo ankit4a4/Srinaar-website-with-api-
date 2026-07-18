@@ -8,7 +8,7 @@ import { useRequireAuth } from "@/lib/redux/useRequireAuth";
 import ProductCard from "@/components/common/ProductCard";
 import ProductCardSkeleton from "@/components/common/ProductCardSkeleton";
 
-const WishlistProduct = () => {
+const WishlistProduct = ({ compact = false }) => {
   const isLoggedIn = useSelector(selectIsLoggedIn);
   const requireAuth = useRequireAuth();
   const { data: wishlist, isLoading } = useGetWishlistQuery(undefined, { skip: !isLoggedIn });
@@ -31,7 +31,7 @@ const WishlistProduct = () => {
   }
 
   return (
-    <div className="max-w-7xl py-8 md:py-20 mx-auto px-4 sm:px-6 lg:px-8">
+    <div className={compact ? "" : "max-w-7xl py-8 md:py-20 mx-auto px-4 sm:px-6 lg:px-8"}>
       {!isLoading && products.length === 0 && (
         <div className="flex min-h-[240px] flex-col items-center justify-center text-center">
           <h3 className="text-2xl font-semibold text-[#2a1a14]">Your wishlist is empty</h3>
@@ -45,7 +45,13 @@ const WishlistProduct = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-1 lg:grid-cols-4 lg:gap-x-6">
+      <div
+        className={
+          compact
+            ? "grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3"
+            : "grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-1 lg:grid-cols-4 lg:gap-x-6"
+        }
+      >
         {isLoading &&
           Array.from({ length: 4 }).map((_, i) => <ProductCardSkeleton key={i} />)}
 

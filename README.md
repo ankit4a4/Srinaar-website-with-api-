@@ -126,3 +126,18 @@ Went through every page/component to find anything still not wired up:
 Confirmed intentionally static (no backend concept exists for these, and building one wasn't in
 scope): Premium Features badges, Royal Heritage story, Craft Section, Testimonials, top
 promotional marquee, and all the small page-header banners (Shop/Cart/Wishlist/Contact/About).
+
+## Update — Round 4 fixes
+
+- **Profile form inputs fixed** — inputs now use solid, explicit styling (2px border, white
+  background, clear disabled state) instead of a shared CSS class that could look inconsistent.
+  Should now look crisp and visible in every state (typing, focused, disabled).
+- **Wishlist heart icon repositioned** — now sits exactly 20px from the bottom and 20px from the
+  right of every product image (shared `ProductCard`, so this applies everywhere: home, shop,
+  wishlist, recently viewed, "you may also like").
+- **Profile page grids capped at 3 columns** — "My Wishlist" and "Recently Viewed" tabs inside
+  the profile page were cramped at 4 columns in that narrower layout; now show 3 per row there
+  (the standalone `/wishlist` page still shows 4, since it has the full page width).
+- **Loyalty Points removed** from the profile sidebar entirely.
+- **Homepage login section now disappears once logged in** — no more "Welcome back" card or
+  logout button sitting on the homepage; account management now lives entirely on `/profile`.

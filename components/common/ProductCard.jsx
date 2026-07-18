@@ -58,7 +58,7 @@ export default function ProductCard({ product }) {
             type="button"
             onClick={handleWishlist}
             disabled={wishlistBusy}
-            className={`absolute bottom-3 right-3 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-[0_8px_25px_rgba(0,0,0,0.18)] transition-all duration-300 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 hover:scale-110 hover:bg-[#7f1026] hover:text-white sm:h-11 sm:w-11 ${
+            className={`absolute bottom-[20px] right-[20px] z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-[0_8px_25px_rgba(0,0,0,0.18)] transition-all duration-300 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 hover:scale-110 hover:bg-[#7f1026] hover:text-white sm:h-11 sm:w-11 ${
               isInWishlist ? "text-[#7f1026] opacity-100 translate-y-0" : "text-[#7f1026]"
             }`}
           >

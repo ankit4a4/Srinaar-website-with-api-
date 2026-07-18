@@ -8,7 +8,6 @@ import {
   FiShoppingBag,
   FiHeart,
   FiClock,
-  FiGift,
   FiLock,
   FiLogOut,
   FiLoader,
@@ -27,7 +26,6 @@ const TABS = [
   { key: "orders", label: "My Orders", icon: FiShoppingBag },
   { key: "wishlist", label: "My Wishlist", icon: FiHeart },
   { key: "recent", label: "Recently Viewed", icon: FiClock },
-  { key: "loyalty", label: "Loyalty Points", icon: FiGift },
   { key: "password", label: "Change Password", icon: FiLock },
 ];
 
@@ -112,9 +110,8 @@ export default function Profile() {
           {activeTab === "profile" && <ProfileForm user={user} />}
           {activeTab === "address" && <AddressBook />}
           {activeTab === "orders" && <OrdersPanel />}
-          {activeTab === "wishlist" && <WishlistProduct />}
+          {activeTab === "wishlist" && <WishlistProduct compact />}
           {activeTab === "recent" && <RecentlyViewedGrid />}
-          {activeTab === "loyalty" && <ComingSoonCard title="Loyalty Points" text="Earn points on every order and redeem them for discounts. This feature is coming soon." />}
           {activeTab === "password" && (
             <ComingSoonCard
               title="Change Password"
@@ -183,7 +180,7 @@ function ProfileForm({ user }) {
             <input
               value={form.firstName}
               onChange={handleChange("firstName")}
-              className="input-field"
+              className="w-full rounded-xl border-2 border-[#e4d9cd] bg-white px-4 py-3 text-sm text-[#2a1a14] outline-none transition-colors duration-200 focus:border-[#990027] disabled:cursor-not-allowed disabled:bg-[#f6f3ee] disabled:text-[#8b6f63]"
             />
           </Field>
 
@@ -191,12 +188,12 @@ function ProfileForm({ user }) {
             <input
               value={form.lastName}
               onChange={handleChange("lastName")}
-              className="input-field"
+              className="w-full rounded-xl border-2 border-[#e4d9cd] bg-white px-4 py-3 text-sm text-[#2a1a14] outline-none transition-colors duration-200 focus:border-[#990027] disabled:cursor-not-allowed disabled:bg-[#f6f3ee] disabled:text-[#8b6f63]"
             />
           </Field>
 
           <Field label="Email">
-            <input value={user.email} disabled className="input-field cursor-not-allowed bg-[#f6f3ee] text-[#8b6f63]" />
+            <input value={user.email} disabled className="w-full rounded-xl border-2 border-[#e4d9cd] bg-white px-4 py-3 text-sm text-[#2a1a14] outline-none transition-colors duration-200 focus:border-[#990027] disabled:cursor-not-allowed disabled:bg-[#f6f3ee] disabled:text-[#8b6f63]" />
           </Field>
 
           <Field label="Contact Number">
@@ -204,7 +201,7 @@ function ProfileForm({ user }) {
               value={form.phone}
               onChange={handleChange("phone")}
               placeholder="+91 XXXXX XXXXX"
-              className="input-field"
+              className="w-full rounded-xl border-2 border-[#e4d9cd] bg-white px-4 py-3 text-sm text-[#2a1a14] outline-none transition-colors duration-200 focus:border-[#990027] disabled:cursor-not-allowed disabled:bg-[#f6f3ee] disabled:text-[#8b6f63]"
             />
           </Field>
         </div>
@@ -223,7 +220,7 @@ function ProfileForm({ user }) {
               disabled={dobLocked}
               value={form.day}
               onChange={handleChange("day")}
-              className="input-field text-center disabled:cursor-not-allowed disabled:bg-[#f6f3ee]"
+              className="w-full rounded-xl border-2 border-[#e4d9cd] bg-white px-4 py-3 text-sm text-[#2a1a14] outline-none transition-colors duration-200 focus:border-[#990027] disabled:cursor-not-allowed disabled:bg-[#f6f3ee] disabled:text-[#8b6f63] text-center"
             />
             <input
               placeholder="MM"
@@ -231,7 +228,7 @@ function ProfileForm({ user }) {
               disabled={dobLocked}
               value={form.month}
               onChange={handleChange("month")}
-              className="input-field text-center disabled:cursor-not-allowed disabled:bg-[#f6f3ee]"
+              className="w-full rounded-xl border-2 border-[#e4d9cd] bg-white px-4 py-3 text-sm text-[#2a1a14] outline-none transition-colors duration-200 focus:border-[#990027] disabled:cursor-not-allowed disabled:bg-[#f6f3ee] disabled:text-[#8b6f63] text-center"
             />
             <input
               placeholder="YYYY"
@@ -239,7 +236,7 @@ function ProfileForm({ user }) {
               disabled={dobLocked}
               value={form.year}
               onChange={handleChange("year")}
-              className="input-field text-center disabled:cursor-not-allowed disabled:bg-[#f6f3ee]"
+              className="w-full rounded-xl border-2 border-[#e4d9cd] bg-white px-4 py-3 text-sm text-[#2a1a14] outline-none transition-colors duration-200 focus:border-[#990027] disabled:cursor-not-allowed disabled:bg-[#f6f3ee] disabled:text-[#8b6f63] text-center"
             />
           </div>
         </div>
@@ -441,36 +438,36 @@ function AddressBook() {
         <form onSubmit={handleSubmit} className="mb-8 rounded-xl border border-[#eadfd7] p-5">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="Label">
-              <select value={form.label} onChange={handleChange("label")} className="input-field bg-white">
+              <select value={form.label} onChange={handleChange("label")} className="w-full rounded-xl border-2 border-[#e4d9cd] bg-white px-4 py-3 text-sm text-[#2a1a14] outline-none transition-colors duration-200 focus:border-[#990027] disabled:cursor-not-allowed disabled:bg-[#f6f3ee] disabled:text-[#8b6f63]">
                 <option>Home</option>
                 <option>Work</option>
                 <option>Other</option>
               </select>
             </Field>
             <Field label="Full Name">
-              <input value={form.fullName} onChange={handleChange("fullName")} className="input-field" required />
+              <input value={form.fullName} onChange={handleChange("fullName")} className="w-full rounded-xl border-2 border-[#e4d9cd] bg-white px-4 py-3 text-sm text-[#2a1a14] outline-none transition-colors duration-200 focus:border-[#990027] disabled:cursor-not-allowed disabled:bg-[#f6f3ee] disabled:text-[#8b6f63]" required />
             </Field>
             <Field label="Phone Number">
-              <input value={form.phone} onChange={handleChange("phone")} className="input-field" required />
+              <input value={form.phone} onChange={handleChange("phone")} className="w-full rounded-xl border-2 border-[#e4d9cd] bg-white px-4 py-3 text-sm text-[#2a1a14] outline-none transition-colors duration-200 focus:border-[#990027] disabled:cursor-not-allowed disabled:bg-[#f6f3ee] disabled:text-[#8b6f63]" required />
             </Field>
             <Field label="Pincode">
-              <input value={form.pincode} onChange={handleChange("pincode")} className="input-field" required />
+              <input value={form.pincode} onChange={handleChange("pincode")} className="w-full rounded-xl border-2 border-[#e4d9cd] bg-white px-4 py-3 text-sm text-[#2a1a14] outline-none transition-colors duration-200 focus:border-[#990027] disabled:cursor-not-allowed disabled:bg-[#f6f3ee] disabled:text-[#8b6f63]" required />
             </Field>
             <div className="sm:col-span-2">
               <Field label="Address Line 1">
-                <input value={form.addressLine1} onChange={handleChange("addressLine1")} className="input-field" required />
+                <input value={form.addressLine1} onChange={handleChange("addressLine1")} className="w-full rounded-xl border-2 border-[#e4d9cd] bg-white px-4 py-3 text-sm text-[#2a1a14] outline-none transition-colors duration-200 focus:border-[#990027] disabled:cursor-not-allowed disabled:bg-[#f6f3ee] disabled:text-[#8b6f63]" required />
               </Field>
             </div>
             <div className="sm:col-span-2">
               <Field label="Address Line 2 (optional)">
-                <input value={form.addressLine2} onChange={handleChange("addressLine2")} className="input-field" />
+                <input value={form.addressLine2} onChange={handleChange("addressLine2")} className="w-full rounded-xl border-2 border-[#e4d9cd] bg-white px-4 py-3 text-sm text-[#2a1a14] outline-none transition-colors duration-200 focus:border-[#990027] disabled:cursor-not-allowed disabled:bg-[#f6f3ee] disabled:text-[#8b6f63]" />
               </Field>
             </div>
             <Field label="City">
-              <input value={form.city} onChange={handleChange("city")} className="input-field" required />
+              <input value={form.city} onChange={handleChange("city")} className="w-full rounded-xl border-2 border-[#e4d9cd] bg-white px-4 py-3 text-sm text-[#2a1a14] outline-none transition-colors duration-200 focus:border-[#990027] disabled:cursor-not-allowed disabled:bg-[#f6f3ee] disabled:text-[#8b6f63]" required />
             </Field>
             <Field label="State">
-              <input value={form.state} onChange={handleChange("state")} className="input-field" required />
+              <input value={form.state} onChange={handleChange("state")} className="w-full rounded-xl border-2 border-[#e4d9cd] bg-white px-4 py-3 text-sm text-[#2a1a14] outline-none transition-colors duration-200 focus:border-[#990027] disabled:cursor-not-allowed disabled:bg-[#f6f3ee] disabled:text-[#8b6f63]" required />
             </Field>
           </div>
 
