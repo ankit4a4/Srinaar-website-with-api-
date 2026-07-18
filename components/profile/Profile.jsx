@@ -14,8 +14,8 @@ import {
   FiLoader,
 } from "react-icons/fi";
 import { useDispatch, useSelector } from "react-redux";
-import { selectUser, logout } from "@/lib/redux/authSlice";
-import { useUpdateProfileMutation, useGetMyOrdersQuery } from "@/lib/redux/api";
+import { selectUser, logout, updateUser } from "@/lib/redux/authSlice";
+import { useUpdateProfileMutation, useGetMyOrdersQuery, useGetAddressesQuery, useAddAddressMutation, useUpdateAddressMutation, useSetDefaultAddressMutation, useDeleteAddressMutation } from "@/lib/redux/api";
 import { notifySuccess, notifyError } from "@/lib/utils/notify";
 import { useGoogleButton } from "@/lib/google/GoogleAuthProvider";
 import WishlistProduct from "@/components/wishlist/WishlistProduct";
@@ -110,7 +110,7 @@ export default function Profile() {
         {/* MAIN CONTENT */}
         <div className="rounded-2xl bg-[#f6f3ee] p-2 sm:p-4">
           {activeTab === "profile" && <ProfileForm user={user} />}
-          {activeTab === "address" && <ComingSoonCard title="Delivery Addresses" text="Save multiple delivery addresses for a faster checkout. This feature is coming soon." />}
+          {activeTab === "address" && <AddressBook />}
           {activeTab === "orders" && <OrdersPanel />}
           {activeTab === "wishlist" && <WishlistProduct />}
           {activeTab === "recent" && <RecentlyViewedGrid />}
@@ -128,16 +128,19 @@ export default function Profile() {
 }
 
 function ProfileForm({ user }) {
+  const dispatch = useDispatch();
   const [updateProfile, { isLoading }] = useUpdateProfileMutation();
 
   const nameParts = (user.name || "").split(" ");
+  const existingDob = user.dob ? new Date(user.dob) : null;
+
   const [form, setForm] = useState({
     firstName: nameParts[0] || "",
     lastName: nameParts.slice(1).join(" ") || "",
     phone: user.phone || "",
-    day: "",
-    month: "",
-    year: "",
+    day: existingDob ? String(existingDob.getDate()).padStart(2, "0") : "",
+    month: existingDob ? String(existingDob.getMonth() + 1).padStart(2, "0") : "",
+    year: existingDob ? String(existingDob.getFullYear()) : "",
     gender: user.gender || "",
   });
 
@@ -149,15 +152,19 @@ function ProfileForm({ user }) {
   const handleSave = async (e) => {
     e.preventDefault();
     try {
-      await updateProfile({
+      const res = await updateProfile({
         name: `${form.firstName} ${form.lastName}`.trim(),
         phone: form.phone,
         gender: form.gender,
         dob:
-          form.day && form.month && form.year
+          !dobLocked && form.day && form.month && form.year
             ? `${form.year}-${form.month}-${form.day}`
             : undefined,
       }).unwrap();
+
+      // Keep Redux + localStorage in sync with what was actually saved,
+      // otherwise the form would appear to "reset" on next visit/refresh.
+      dispatch(updateUser(res.user));
       notifySuccess("Profile updated successfully!");
     } catch (err) {
       notifyError(err?.data?.message || "Could not update profile. Please try again.");
@@ -332,6 +339,230 @@ function Field({ label, children }) {
     <div>
       <label className="mb-2 block text-sm font-medium text-[#4a3730]">{label}</label>
       {children}
+    </div>
+  );
+}
+
+const emptyAddressForm = {
+  label: "Home",
+  fullName: "",
+  phone: "",
+  addressLine1: "",
+  addressLine2: "",
+  city: "",
+  state: "",
+  pincode: "",
+};
+
+function AddressBook() {
+  const { data: addresses, isLoading } = useGetAddressesQuery();
+  const [addAddress, { isLoading: adding }] = useAddAddressMutation();
+  const [updateAddress, { isLoading: updating }] = useUpdateAddressMutation();
+  const [setDefaultAddress] = useSetDefaultAddressMutation();
+  const [deleteAddress] = useDeleteAddressMutation();
+
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [form, setForm] = useState(emptyAddressForm);
+
+  const handleChange = (field) => (e) =>
+    setForm((prev) => ({ ...prev, [field]: e.target.value }));
+
+  const openAddForm = () => {
+    setEditingId(null);
+    setForm(emptyAddressForm);
+    setShowForm(true);
+  };
+
+  const openEditForm = (address) => {
+    setEditingId(address._id);
+    setForm({
+      label: address.label,
+      fullName: address.fullName,
+      phone: address.phone,
+      addressLine1: address.addressLine1,
+      addressLine2: address.addressLine2 || "",
+      city: address.city,
+      state: address.state,
+      pincode: address.pincode,
+    });
+    setShowForm(true);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (editingId) {
+        await updateAddress({ id: editingId, ...form }).unwrap();
+        notifySuccess("Address updated!");
+      } else {
+        await addAddress(form).unwrap();
+        notifySuccess("Address added!");
+      }
+      setShowForm(false);
+    } catch (err) {
+      notifyError(err?.data?.message || "Could not save address. Please check the fields.");
+    }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      await deleteAddress(id).unwrap();
+      notifySuccess("Address removed");
+    } catch (err) {
+      notifyError(err?.data?.message || "Could not remove address.");
+    }
+  };
+
+  const handleSetDefault = async (id) => {
+    try {
+      await setDefaultAddress(id).unwrap();
+      notifySuccess("Default address updated");
+    } catch (err) {
+      notifyError(err?.data?.message || "Could not update default address.");
+    }
+  };
+
+  return (
+    <div className="rounded-2xl bg-white p-6 shadow-sm sm:p-8">
+      <div className="mb-6 flex items-center justify-between">
+        <h2 className="font-serif text-2xl text-[#2a1a14]">Delivery Addresses</h2>
+        {!showForm && (
+          <button
+            onClick={openAddForm}
+            className="rounded-full bg-[#990027] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#7f0021]"
+          >
+            + Add Address
+          </button>
+        )}
+      </div>
+
+      {showForm && (
+        <form onSubmit={handleSubmit} className="mb-8 rounded-xl border border-[#eadfd7] p-5">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Field label="Label">
+              <select value={form.label} onChange={handleChange("label")} className="input-field bg-white">
+                <option>Home</option>
+                <option>Work</option>
+                <option>Other</option>
+              </select>
+            </Field>
+            <Field label="Full Name">
+              <input value={form.fullName} onChange={handleChange("fullName")} className="input-field" required />
+            </Field>
+            <Field label="Phone Number">
+              <input value={form.phone} onChange={handleChange("phone")} className="input-field" required />
+            </Field>
+            <Field label="Pincode">
+              <input value={form.pincode} onChange={handleChange("pincode")} className="input-field" required />
+            </Field>
+            <div className="sm:col-span-2">
+              <Field label="Address Line 1">
+                <input value={form.addressLine1} onChange={handleChange("addressLine1")} className="input-field" required />
+              </Field>
+            </div>
+            <div className="sm:col-span-2">
+              <Field label="Address Line 2 (optional)">
+                <input value={form.addressLine2} onChange={handleChange("addressLine2")} className="input-field" />
+              </Field>
+            </div>
+            <Field label="City">
+              <input value={form.city} onChange={handleChange("city")} className="input-field" required />
+            </Field>
+            <Field label="State">
+              <input value={form.state} onChange={handleChange("state")} className="input-field" required />
+            </Field>
+          </div>
+
+          <div className="mt-5 flex gap-3">
+            <button
+              type="submit"
+              disabled={adding || updating}
+              className="flex items-center gap-2 rounded-full bg-[#990027] px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-[#7f0021] disabled:opacity-60"
+            >
+              {(adding || updating) && <FiLoader className="animate-spin text-[14px]" />}
+              {editingId ? "Update Address" : "Save Address"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowForm(false)}
+              className="rounded-full border border-[#eadfd7] px-6 py-2.5 text-sm font-medium text-[#4a3730] transition hover:bg-[#f6f3ee]"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      )}
+
+      {isLoading && (
+        <div className="space-y-3">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <div key={i} className="h-24 animate-pulse rounded-xl bg-[#f3ece6]" />
+          ))}
+        </div>
+      )}
+
+      {!isLoading && addresses?.length === 0 && !showForm && (
+        <p className="py-10 text-center text-[#8b6f63]">
+          No saved addresses yet. Add one for a faster checkout.
+        </p>
+      )}
+
+      <div className="space-y-3">
+        {addresses?.map((address) => (
+          <div
+            key={address._id}
+            className={`rounded-xl border p-5 ${
+              address.isDefault ? "border-[#990027]" : "border-[#eadfd7]"
+            }`}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="rounded-full bg-[#f6f1ed] px-3 py-0.5 text-xs font-medium text-[#7f1026]">
+                    {address.label}
+                  </span>
+                  {address.isDefault && (
+                    <span className="rounded-full bg-[#990027] px-3 py-0.5 text-xs font-medium text-white">
+                      Default
+                    </span>
+                  )}
+                </div>
+                <p className="mt-2 text-sm font-semibold text-[#2a1a14]">{address.fullName}</p>
+                <p className="text-sm text-[#8b6f63]">
+                  {address.addressLine1}
+                  {address.addressLine2 ? `, ${address.addressLine2}` : ""}, {address.city},{" "}
+                  {address.state} - {address.pincode}
+                </p>
+                <p className="text-sm text-[#8b6f63]">Phone: {address.phone}</p>
+              </div>
+
+              <div className="flex shrink-0 flex-col items-end gap-2 text-xs">
+                <button
+                  onClick={() => openEditForm(address)}
+                  className="font-medium text-[#7f1026] underline underline-offset-2"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDelete(address._id)}
+                  className="font-medium text-[#a63a2e] underline underline-offset-2"
+                >
+                  Remove
+                </button>
+                {!address.isDefault && (
+                  <button
+                    onClick={() => handleSetDefault(address._id)}
+                    className="font-medium text-[#4a3730] underline underline-offset-2"
+                  >
+                    Set as Default
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
