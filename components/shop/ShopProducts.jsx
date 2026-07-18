@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { FiX } from "react-icons/fi";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useGetProductsQuery, useGetCategoriesQuery } from "@/lib/redux/api";
 import ProductCard from "@/components/common/ProductCard";
 import ProductCardSkeleton from "@/components/common/ProductCardSkeleton";
@@ -9,6 +10,10 @@ import ProductCardSkeleton from "@/components/common/ProductCardSkeleton";
 const MAX_PRICE = 20000;
 
 export default function ShopProducts({ initialCategory = "" }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const searchQuery = searchParams.get("search") || "";
+
   // `categoryOverride` is null until the user picks a category manually;
   // until then we fall back to the route's initialCategory. This avoids
   // syncing state from a prop via useEffect.
@@ -25,11 +30,13 @@ export default function ShopProducts({ initialCategory = "" }) {
   const { data: categoriesData } = useGetCategoriesQuery();
   const { data: productsData, isLoading, isError } = useGetProductsQuery({
     category: activeCategory || undefined,
+    search: searchQuery || undefined,
     limit: 100,
   });
 
   const products = productsData?.products || [];
 
+  const clearSearch = () => router.push("/shop");
 
   // Flatten main + sub categories into a single filterable list
   const categoryOptions = useMemo(() => {
@@ -214,6 +221,23 @@ export default function ShopProducts({ initialCategory = "" }) {
 
           {/* RIGHT CONTENT */}
           <div>
+            {searchQuery && (
+              <div className="mb-6 flex items-center justify-between">
+                <h2 className="font-serif text-xl text-[#2a1d18]">
+                  Search results for &ldquo;{searchQuery}&rdquo;
+                  <span className="ml-2 text-sm font-sans text-[#8a776f]">
+                    ({products.length} found)
+                  </span>
+                </h2>
+                <button
+                  onClick={clearSearch}
+                  className="text-[12px] font-medium text-[#8b5e3c] underline underline-offset-2"
+                >
+                  Clear search
+                </button>
+              </div>
+            )}
+
             {/* TOP BAR */}
             <div className="mb-8 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
               <div className="flex w-full justify-between items-center gap-2">

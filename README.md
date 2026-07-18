@@ -90,3 +90,39 @@ lib/google/
 - `User`: `dob`, `gender` (profile form already sends these; harmless no-ops until the schema/route accepts them)
 - `Product.colors`: optionally support `[{ value, image }]` instead of plain strings, to enable the image-swatch feature
 - Nothing else changed on the API contract — all existing endpoints are used as-is.
+
+## Update — Profile page fixes
+
+- **Fixed a real bug**: after saving profile details (name, phone, birthday, gender), the change
+  now actually persists — it's saved back into Redux + localStorage immediately, and the birthday
+  fields correctly show the saved date (locked/disabled) next time you open the page.
+- **Delivery Addresses is now fully working** (was a placeholder before) — add, edit, delete, and
+  set-default, backed by new backend endpoints (`/api/addresses`).
+- Loyalty Points and Change Password remain placeholders — the first has no backend concept yet,
+  and the second isn't applicable since login is Google-only.
+
+## Update — Full audit pass (round 3)
+
+Went through every page/component to find anything still not wired up:
+
+- **Header search bar** — was purely decorative before; now typing + pressing Enter takes you
+  to `/shop?search=your query`, and the shop page shows a "Search results for..." heading with
+  a clear button. Backend's existing `?search=` param on `GET /api/products` powers this.
+- **Wishlist icon badge** — the heart icon in the header now shows a live count too, matching
+  the cart badge (desktop + mobile).
+- **Footer** — "Top Categories" now pulls real categories from the backend; "My Account",
+  "Track Order", "My Cart", "Wishlist", "Order History", "Contact us", "About us" are now real
+  links. ("FAQs", "Privacy Policy", "Shipping Policy", etc. are left as plain text — those pages
+  don't exist yet, so I didn't want fake/dead links.) Social icons link out to placeholder
+  handles (`instagram.com/srinaar`, etc.) — swap these for your real profile URLs.
+- **New Arrivals** (homepage) — was showing 3 identical hardcoded "Straight Suit" cards with the
+  same placeholder image. Now shows your 3 actual latest products.
+- **Instagram showcase** (our-story page) — was showing the same placeholder image 6 times in a
+  loop. Now shows a real "shop the feed" style gallery of your actual product photos, each
+  linking to that product.
+- Removed two empty leftover route folders (`app/collection/test`, `app/singleproduct/test`)
+  that had no page file and weren't doing anything.
+
+Confirmed intentionally static (no backend concept exists for these, and building one wasn't in
+scope): Premium Features badges, Royal Heritage story, Craft Section, Testimonials, top
+promotional marquee, and all the small page-header banners (Shop/Cart/Wishlist/Contact/About).

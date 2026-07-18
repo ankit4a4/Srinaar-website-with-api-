@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import {
   FaInstagram,
   FaWhatsapp,
@@ -9,25 +10,35 @@ import {
 } from "react-icons/fa6";
 import { PiThreadsLogoLight } from "react-icons/pi";
 import logo from "../../assets/logo.png";
+import { useGetCategoriesQuery } from "@/lib/redux/api";
 
 export default function Footer() {
+  const { data: categories, isLoading } = useGetCategoriesQuery();
+  const topCategories = (categories || []).slice(0, 5);
+
   return (
     <footer className="bg-gradient-to-b from-[#990027] to-[#330113] text-white pt-16 pb-10 px-6">
 
       {/* TOP GRID */}
       <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-10">
 
-        {/* COLUMN 1 */}
+        {/* COLUMN 1 — real categories from the backend */}
         <div>
           <h3 className="text-base md:text-lg font-semibold mb-4 tracking-wide uppercase">
             Top Categories
           </h3>
-          <ul className="space-y-2 text-md  text-gray-200">
-            <li>Anarkali Suit Sets</li>
-            <li>Kurtas</li>
-            <li>Palazzos</li>
-            <li>Lehenga</li>
-            <li>Straight Suit Sets</li>
+          <ul className="space-y-2 text-md text-gray-200">
+            {isLoading && <li className="text-gray-400">Loading…</li>}
+            {!isLoading && topCategories.length === 0 && (
+              <li className="text-gray-400">No categories yet</li>
+            )}
+            {topCategories.map((cat) => (
+              <li key={cat._id}>
+                <Link href={`/collection/${cat._id}`} className="hover:text-white transition-colors">
+                  {cat.name}
+                </Link>
+              </li>
+            ))}
           </ul>
         </div>
 
@@ -36,10 +47,14 @@ export default function Footer() {
           <h3 className="text-base md:text-lg font-semibold mb-4 tracking-wide uppercase">
             Customer Service
           </h3>
-          <ul className="space-y-2 text-md  text-gray-200">
+          <ul className="space-y-2 text-md text-gray-200">
             <li>Returns & Cancellation</li>
             <li>FAQs</li>
-            <li>Contact us</li>
+            <li>
+              <Link href="/contact" className="hover:text-white transition-colors">
+                Contact us
+              </Link>
+            </li>
             <li>Blog</li>
           </ul>
         </div>
@@ -49,10 +64,18 @@ export default function Footer() {
           <h3 className="text-base md:text-lg font-semibold mb-4 tracking-wide uppercase">
             Srinaar Brand
           </h3>
-          <ul className="space-y-2 text-md  text-gray-200">
-            <li>About us</li>
+          <ul className="space-y-2 text-md text-gray-200">
+            <li>
+              <Link href="/our-story" className="hover:text-white transition-colors">
+                About us
+              </Link>
+            </li>
             <li>Investor Information</li>
-            <li>Business Enquiry</li>
+            <li>
+              <Link href="/contact" className="hover:text-white transition-colors">
+                Business Enquiry
+              </Link>
+            </li>
             <li>Achievements</li>
             <li>Store Locator</li>
           </ul>
@@ -63,13 +86,33 @@ export default function Footer() {
           <h3 className="text-base md:text-lg font-semibold mb-4 tracking-wide uppercase">
             My Profile
           </h3>
-          <ul className="space-y-2 text-md  text-gray-200">
-            <li>My Account</li>
-            <li>Track Order</li>
-            <li>My Cart</li>
+          <ul className="space-y-2 text-md text-gray-200">
+            <li>
+              <Link href="/profile" className="hover:text-white transition-colors">
+                My Account
+              </Link>
+            </li>
+            <li>
+              <Link href="/profile" className="hover:text-white transition-colors">
+                Track Order
+              </Link>
+            </li>
+            <li>
+              <Link href="/cart" className="hover:text-white transition-colors">
+                My Cart
+              </Link>
+            </li>
             <li>Returns & Cancellation</li>
-            <li>Wishlist</li>
-            <li>Order History</li>
+            <li>
+              <Link href="/wishlist" className="hover:text-white transition-colors">
+                Wishlist
+              </Link>
+            </li>
+            <li>
+              <Link href="/profile" className="hover:text-white transition-colors">
+                Order History
+              </Link>
+            </li>
           </ul>
         </div>
 
@@ -78,7 +121,7 @@ export default function Footer() {
           <h3 className="text-base md:text-lg font-semibold mb-4 tracking-wide uppercase">
             Quick Links
           </h3>
-          <ul className="space-y-2 text-md  text-gray-200">
+          <ul className="space-y-2 text-md text-gray-200">
             <li>Shipping Policy</li>
             <li>Privacy Policy</li>
             <li>Careers</li>
@@ -104,11 +147,21 @@ export default function Footer() {
 
         {/* SOCIAL ICONS */}
         <div className="flex gap-12 text-xl md:text-2xl">
-          <FaInstagram className="hover:scale-125 transition duration-300 cursor-pointer" />
-          <FaWhatsapp className="hover:scale-125 transition duration-300 cursor-pointer" />
-          <FaLinkedinIn className="hover:scale-125 transition duration-300 cursor-pointer" />
-          <FaXTwitter className="hover:scale-125 transition duration-300 cursor-pointer" />
-          <PiThreadsLogoLight className="hover:scale-125 transition duration-300 cursor-pointer" />
+          <a href="https://instagram.com/srinaar" target="_blank" rel="noopener noreferrer">
+            <FaInstagram className="hover:scale-125 transition duration-300 cursor-pointer" />
+          </a>
+          <a href="https://wa.me/" target="_blank" rel="noopener noreferrer">
+            <FaWhatsapp className="hover:scale-125 transition duration-300 cursor-pointer" />
+          </a>
+          <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer">
+            <FaLinkedinIn className="hover:scale-125 transition duration-300 cursor-pointer" />
+          </a>
+          <a href="https://x.com" target="_blank" rel="noopener noreferrer">
+            <FaXTwitter className="hover:scale-125 transition duration-300 cursor-pointer" />
+          </a>
+          <a href="https://threads.net" target="_blank" rel="noopener noreferrer">
+            <PiThreadsLogoLight className="hover:scale-125 transition duration-300 cursor-pointer" />
+          </a>
         </div>
       </div>
     </footer>

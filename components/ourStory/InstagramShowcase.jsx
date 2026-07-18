@@ -1,68 +1,79 @@
 "use client";
 
-import Image from "next/image";
+import Link from "next/link";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay } from "swiper/modules";
-
-import insta1 from "../../assets/home/collection.png";
-import insta2 from "../../assets/home/collection.png";
-import insta3 from "../../assets/home/collection.png";
-import insta4 from "../../assets/home/collection.png";
-import insta5 from "../../assets/home/collection.png";
-import insta6 from "../../assets/home/collection.png";
+import { useGetProductsQuery, fileUrl } from "@/lib/redux/api";
 
 import "swiper/css";
 
-const images = [insta1, insta2, insta3, insta4, insta5, insta6];
-
 const InstagramShowcase = () => {
+  // "Shop the feed" — a real gallery of product photos instead of a fake feed
+  const { data, isLoading } = useGetProductsQuery({ limit: 8 });
+  const products = data?.products || [];
+
   return (
     <section className="w-full bg-[#e9e5dc] py-10 sm:py-12 lg:py-14 overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 items-center gap-8 lg:gap-12">
-          
+
           {/* Left Slider */}
           <div className="relative w-full max-w-[760px]">
             <div className="px-0 sm:px-2">
-              <Swiper
-                modules={[Autoplay]}
-                loop={true}
-                speed={900}
-                autoplay={{
-                  delay: 2000,
-                  disableOnInteraction: false,
-                  pauseOnMouseEnter: true,
-                }}
-                spaceBetween={14}
-                breakpoints={{
-                  0: {
-                    slidesPerView: 1.2,
-                    spaceBetween: 12,
-                  },
-                  500: {
-                    slidesPerView: 2,
-                    spaceBetween: 12,
-                  },
-                  1024: {
-                    slidesPerView: 3,
-                    spaceBetween: 14,
-                  },
-                }}
-                className="w-full"
-              >
-                {images.map((img, index) => (
-                  <SwiperSlide key={index}>
-                    <div className="relative h-[170px] sm:h-[180px] lg:h-[175px] overflow-hidden bg-[#f5f1e9]">
-                      <Image
-                        src={img}
-                        alt={`Instagram ${index + 1}`}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                  </SwiperSlide>
-                ))}
-              </Swiper>
+              {isLoading && (
+                <div className="flex gap-3">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="h-[170px] sm:h-[180px] lg:h-[175px] w-1/3 shrink-0 animate-pulse rounded bg-black/10"
+                    />
+                  ))}
+                </div>
+              )}
+
+              {!isLoading && products.length > 0 && (
+                <Swiper
+                  modules={[Autoplay]}
+                  loop={true}
+                  speed={900}
+                  autoplay={{
+                    delay: 2000,
+                    disableOnInteraction: false,
+                    pauseOnMouseEnter: true,
+                  }}
+                  spaceBetween={14}
+                  breakpoints={{
+                    0: {
+                      slidesPerView: 1.2,
+                      spaceBetween: 12,
+                    },
+                    500: {
+                      slidesPerView: 2,
+                      spaceBetween: 12,
+                    },
+                    1024: {
+                      slidesPerView: 3,
+                      spaceBetween: 14,
+                    },
+                  }}
+                  className="w-full"
+                >
+                  {products.map((product) => (
+                    <SwiperSlide key={product._id}>
+                      <Link
+                        href={`/singleproduct/${product._id}`}
+                        className="relative block h-[170px] sm:h-[180px] lg:h-[175px] overflow-hidden bg-[#f5f1e9]"
+                      >
+                        <img
+                          src={fileUrl(product.images?.[0]) || "https://placehold.co/400x400?text=Srinaar"}
+                          alt={product.name}
+                          className="absolute inset-0 h-full w-full object-cover"
+                        />
+                      </Link>
+                    </SwiperSlide>
+                  ))}
+                </Swiper>
+              )}
             </div>
           </div>
 
@@ -74,9 +85,11 @@ const InstagramShowcase = () => {
 
             <p className="mt-3 text-[14px] text-[#990027]">@Srinaar</p>
 
-            <button className="btn-primary mt-5">
-              <span>Follow Now</span>
-            </button>
+            <a href="https://instagram.com/srinaar" target="_blank" rel="noopener noreferrer">
+              <button className="btn-primary mt-5">
+                <span>Follow Now</span>
+              </button>
+            </a>
           </div>
         </div>
       </div>

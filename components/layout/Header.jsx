@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   FiSearch,
   FiHeart,
@@ -18,7 +18,7 @@ import Image from "next/image";
 import logo from "../../assets/logo.png";
 import logo2 from "../../assets/logo2.png";
 import { useSelector } from "react-redux";
-import { useGetCategoriesQuery, useGetCartQuery } from "@/lib/redux/api";
+import { useGetCategoriesQuery, useGetCartQuery, useGetWishlistQuery } from "@/lib/redux/api";
 import { selectIsLoggedIn, selectUser } from "@/lib/redux/authSlice";
 
 const staticMenuItems = [
@@ -149,6 +149,51 @@ function CartIcon({ count, className = "text-xl text-white" }) {
   );
 }
 
+function WishlistIcon({ count, iconColor = "text-white" }) {
+  return (
+    <Link href={iconLinks.wishlist} className="relative inline-flex">
+      <button className="group rounded-full border border-transparent p-2 transition-all duration-300 hover:border-white hover:bg-white hover:shadow-[0_0_0_3px_rgba(255,255,255,0.15)]">
+        <FiHeart className={`text-xl transition-colors duration-300 group-hover:text-[#990027] ${iconColor}`} />
+      </button>
+      {count > 0 && (
+        <span className="pointer-events-none absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#c9a227] px-1 text-[10px] font-semibold leading-none text-white shadow">
+          {count > 9 ? "9+" : count}
+        </span>
+      )}
+    </Link>
+  );
+}
+
+function SearchBox({ light = true }) {
+  const router = useRouter();
+  const [value, setValue] = useState("");
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!value.trim()) return;
+    router.push(`/shop?search=${encodeURIComponent(value.trim())}`);
+  };
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className={`hidden lg:flex items-center border rounded-full px-4 py-1.5 w-[220px] transition-all duration-300 group focus-within:bg-white ${
+        light ? "border-white/40" : "border-white/40"
+      }`}
+    >
+      <input
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        placeholder="Search"
+        className="bg-transparent outline-none text-sm w-full text-white placeholder-white focus:text-black focus:placeholder-gray-500"
+      />
+      <button type="submit" aria-label="Search">
+        <FiSearch className="ml-2 text-white transition-colors duration-300 group-focus-within:text-black" />
+      </button>
+    </form>
+  );
+}
+
 function DesktopNav({
   collectionsOpen,
   setCollectionsOpen,
@@ -156,6 +201,7 @@ function DesktopNav({
   categoriesLoading,
   isTransparentState,
   cartCount,
+  wishlistCount,
 }) {
   return (
     <div className="hidden md:flex items-center justify-between gap-6">
@@ -201,19 +247,9 @@ function DesktopNav({
 
       {/* RIGHT */}
       <div className="flex items-center justify-end gap-5 text-white">
-        <div className="hidden lg:flex items-center border border-white/40 rounded-full px-4 py-1.5 w-[220px] transition-all duration-300 group focus-within:bg-white">
-          <input
-            placeholder="Search"
-            className="bg-transparent outline-none text-sm w-full text-white placeholder-white focus:text-black focus:placeholder-gray-500"
-          />
-          <FiSearch className="ml-2 text-white transition-colors duration-300 group-focus-within:text-black" />
-        </div>
+        <SearchBox />
 
-        <Link href={iconLinks.wishlist}>
-          <button className="group rounded-full border border-transparent p-2 transition-all duration-300 hover:border-white hover:bg-white hover:shadow-[0_0_0_3px_rgba(255,255,255,0.15)]">
-            <FiHeart className="text-xl text-white transition-colors duration-300 group-hover:text-[#990027]" />
-          </button>
-        </Link>
+        <WishlistIcon count={wishlistCount} />
 
         <ProfileDropdown iconColor="text-white" />
 
@@ -223,7 +259,7 @@ function DesktopNav({
   );
 }
 
-function MobileTopBar({ setMobileMenu, isTransparentState, cartCount }) {
+function MobileTopBar({ setMobileMenu, isTransparentState, cartCount, wishlistCount }) {
   return (
     <div className="flex md:hidden items-center justify-between text-white">
       <FiMenu className="text-2xl cursor-pointer" onClick={() => setMobileMenu(true)} />
@@ -237,7 +273,17 @@ function MobileTopBar({ setMobileMenu, isTransparentState, cartCount }) {
         />
       </Link>
 
-      <CartIcon count={cartCount} />
+      <div className="flex items-center gap-4">
+        <Link href={iconLinks.wishlist} className="relative inline-flex">
+          <FiHeart className="text-xl text-white" />
+          {wishlistCount > 0 && (
+            <span className="absolute -right-2 -top-2 flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-[#c9a227] px-1 text-[9px] font-semibold leading-none text-white shadow">
+              {wishlistCount > 9 ? "9+" : wishlistCount}
+            </span>
+          )}
+        </Link>
+        <CartIcon count={cartCount} />
+      </div>
     </div>
   );
 }
@@ -250,6 +296,7 @@ function HeaderContent({
   setMobileMenu,
   isTransparentState,
   cartCount,
+  wishlistCount,
 }) {
   return (
     <div className="px-4 lg:px-6">
@@ -260,11 +307,13 @@ function HeaderContent({
         categoriesLoading={categoriesLoading}
         isTransparentState={isTransparentState}
         cartCount={cartCount}
+        wishlistCount={wishlistCount}
       />
       <MobileTopBar
         setMobileMenu={setMobileMenu}
         isTransparentState={isTransparentState}
         cartCount={cartCount}
+        wishlistCount={wishlistCount}
       />
     </div>
   );
@@ -285,6 +334,8 @@ export default function Header() {
   const user = useSelector(selectUser);
   const { data: cart } = useGetCartQuery(undefined, { skip: !isLoggedIn });
   const cartCount = (cart?.items || []).reduce((sum, item) => sum + item.quantity, 0);
+  const { data: wishlist } = useGetWishlistQuery(undefined, { skip: !isLoggedIn });
+  const wishlistCount = (wishlist?.products || []).length;
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 80);
@@ -311,6 +362,7 @@ export default function Header() {
               setMobileMenu={setMobileMenu}
               isTransparentState={isTransparentState}
               cartCount={cartCount}
+              wishlistCount={wishlistCount}
             />
           </div>
         </div>
@@ -332,6 +384,7 @@ export default function Header() {
               setMobileMenu={setMobileMenu}
               isTransparentState={false}
               cartCount={cartCount}
+              wishlistCount={wishlistCount}
             />
           </div>
         </div>
