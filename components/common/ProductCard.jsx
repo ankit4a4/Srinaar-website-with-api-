@@ -80,7 +80,7 @@ export default function ProductCard({ product }) {
             {product.name}
           </h3>
 
-          <div className="mt-3 flex items-end gap-2">
+          <div className="mt-1 flex items-end gap-2">
             <span className="text-[22px] font-semibold leading-none text-[#1f1f1f] sm:text-[26px]">
               ₹{product.price?.toLocaleString("en-IN")}
             </span>
