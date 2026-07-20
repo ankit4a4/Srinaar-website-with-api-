@@ -45,16 +45,16 @@ export default function ProductCard({ product }) {
     <Link href={`/singleproduct/${product._id}`} className="group block">
       <div className="overflow-hidden">
         {/* Image Wrapper */}
-        <div className="relative h-[350px] md:h-[340px] overflow-hidden  bg-[#f6f1ed] sm:h-[350px] lg:h-[400px]">
+        <div className="relative h-[350px] md:h-[340px] overflow-hidden bg-[#f6f1ed] sm:h-[350px] lg:h-[400px]">
           <img
             src={fileUrl(product.images?.[0]) || "https://placehold.co/600x800?text=Srinaar"}
             alt={product.name}
             className="absolute inset-0 h-full w-full object-cover object-top transition duration-700 ease-out group-hover:scale-[1.06]"
           />
 
-          <div className="absolute  inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent opacity-0 transition duration-500 group-hover:opacity-100 h-full w-full " />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent opacity-0 transition duration-500 group-hover:opacity-100" />
 
-          <div
+          <button
             type="button"
             onClick={handleWishlist}
             disabled={wishlistBusy}
@@ -67,7 +67,7 @@ export default function ProductCard({ product }) {
             ) : (
               <FiHeart className="text-[18px]" fill={isInWishlist ? "currentColor" : "none"} />
             )}
-          </div>
+          </button>
         </div>
 
         {/* Content */}
@@ -80,7 +80,7 @@ export default function ProductCard({ product }) {
             {product.name}
           </h3>
 
-          <div className="mt-1 flex items-end gap-2">
+          <div className="mt-3 flex items-end gap-2">
             <span className="text-[22px] font-semibold leading-none text-[#1f1f1f] sm:text-[26px]">
               ₹{product.price?.toLocaleString("en-IN")}
             </span>

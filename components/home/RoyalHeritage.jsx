@@ -3,11 +3,18 @@
 import royalImg from "@/assets/home/royal.png";
 import traditionImg from "@/assets/home/royal2.png";
 import regalImg from "@/assets/home/royal3.png";
+import { useGetBannersQuery, fileUrl } from "@/lib/redux/api";
 
-const slides = [
+const fallbackImages = {
+  "heritage-1": royalImg.src,
+  "heritage-2": traditionImg.src,
+  "heritage-3": regalImg.src,
+};
+
+const slideConfig = [
   {
     id: 1,
-    image: royalImg.src,
+    slot: "heritage-1",
     align: "right",
     subtitle: "Royal",
     title: "Heritage",
@@ -17,7 +24,7 @@ const slides = [
   },
   {
     id: 2,
-    image: traditionImg.src,
+    slot: "heritage-2",
     align: "left",
     subtitle: "",
     title: "Tradition in Style",
@@ -27,7 +34,7 @@ const slides = [
   },
   {
     id: 3,
-    image: regalImg.src,
+    slot: "heritage-3",
     align: "right",
     subtitle: "Classic",
     title: "Regal Charm",
@@ -38,6 +45,14 @@ const slides = [
 ];
 
 export default function RoyalHeritage() {
+  const { data: banners } = useGetBannersQuery();
+
+  const slides = slideConfig.map((config) => {
+    const banner = banners?.find((b) => b.slot === config.slot);
+    const image = banner?.image ? fileUrl(banner.image) : fallbackImages[config.slot];
+    return { ...config, image };
+  });
+
   return (
     <section className="w-full">
       {slides.map((slide) => (

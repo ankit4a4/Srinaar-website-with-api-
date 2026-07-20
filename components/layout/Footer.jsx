@@ -14,7 +14,9 @@ import { useGetCategoriesQuery } from "@/lib/redux/api";
 
 export default function Footer() {
   const { data: categories, isLoading } = useGetCategoriesQuery();
-  const topCategories = (categories || []).slice(0, 5);
+  // Capped at 4 so the column doesn't grow taller than the rest as more
+  // categories get added in the admin panel.
+  const topCategories = (categories || []).slice(0, 4);
 
   return (
     <footer className="bg-gradient-to-b from-[#990027] to-[#330113] text-white pt-16 pb-10 px-6">
@@ -22,7 +24,7 @@ export default function Footer() {
       {/* TOP GRID */}
       <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-10">
 
-        {/* COLUMN 1 — real categories from the backend */}
+        {/* COLUMN 1 — real categories from the backend, capped at 4 */}
         <div>
           <h3 className="text-base md:text-lg font-semibold mb-4 tracking-wide uppercase">
             Top Categories
@@ -48,14 +50,26 @@ export default function Footer() {
             Customer Service
           </h3>
           <ul className="space-y-2 text-md text-gray-200">
-            <li>Returns & Cancellation</li>
-            <li>FAQs</li>
+            <li>
+              <Link href="/returns" className="hover:text-white transition-colors">
+                Returns & Cancellation
+              </Link>
+            </li>
+            <li>
+              <Link href="/faqs" className="hover:text-white transition-colors">
+                FAQs
+              </Link>
+            </li>
             <li>
               <Link href="/contact" className="hover:text-white transition-colors">
                 Contact us
               </Link>
             </li>
-            <li>Blog</li>
+            <li>
+              <Link href="/shipping-policy" className="hover:text-white transition-colors">
+                Shipping Policy
+              </Link>
+            </li>
           </ul>
         </div>
 
@@ -70,14 +84,21 @@ export default function Footer() {
                 About us
               </Link>
             </li>
-            <li>Investor Information</li>
+            <li>
+              <Link href="/investor-information" className="hover:text-white transition-colors">
+                Investor Information
+              </Link>
+            </li>
             <li>
               <Link href="/contact" className="hover:text-white transition-colors">
                 Business Enquiry
               </Link>
             </li>
-            <li>Achievements</li>
-            <li>Store Locator</li>
+            <li>
+              <Link href="/achievements" className="hover:text-white transition-colors">
+                Achievements
+              </Link>
+            </li>
           </ul>
         </div>
 
@@ -102,7 +123,6 @@ export default function Footer() {
                 My Cart
               </Link>
             </li>
-            <li>Returns & Cancellation</li>
             <li>
               <Link href="/wishlist" className="hover:text-white transition-colors">
                 Wishlist
@@ -122,10 +142,21 @@ export default function Footer() {
             Quick Links
           </h3>
           <ul className="space-y-2 text-md text-gray-200">
-            <li>Shipping Policy</li>
-            <li>Privacy Policy</li>
-            <li>Careers</li>
-            <li>Terms of Use</li>
+            <li>
+              <Link href="/privacy-policy" className="hover:text-white transition-colors">
+                Privacy Policy
+              </Link>
+            </li>
+            <li>
+              <Link href="/careers" className="hover:text-white transition-colors">
+                Careers
+              </Link>
+            </li>
+            <li>
+              <Link href="/terms" className="hover:text-white transition-colors">
+                Terms of Use
+              </Link>
+            </li>
           </ul>
         </div>
       </div>

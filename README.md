@@ -141,3 +141,22 @@ promotional marquee, and all the small page-header banners (Shop/Cart/Wishlist/C
 - **Loyalty Points removed** from the profile sidebar entirely.
 - **Homepage login section now disappears once logged in** — no more "Welcome back" card or
   logout button sitting on the homepage; account management now lives entirely on `/profile`.
+
+## Update — Round 5
+
+- **Royal Heritage banner images** are now admin-controlled — the admin panel has a new
+  "Banners" page to upload/replace each of the 3 background photos. Falls back to the original
+  bundled images until an admin uploads something.
+- **Contact form success popup** — submitting the contact form now shows a proper modal
+  ("Message Sent! ... we'll get back to you as soon as possible.") instead of just a toast, with
+  a close button.
+- **Footer** — "Top Categories" capped at 4 (was 5) so it doesn't grow taller than the other
+  columns as more categories get added. All footer links now point to real pages.
+- **8 new pages built**: Returns & Cancellation (`/returns`), Shipping Policy
+  (`/shipping-policy`), Privacy Policy (`/privacy-policy`), Terms of Use (`/terms`), Careers
+  (`/careers`), Investor Information (`/investor-information`), Achievements (`/achievements`,
+  with a milestone timeline), and FAQs (`/faqs`, with an accordion). All share a common
+  `PolicyHero`/`PolicyLayout` design for a consistent, premium look.
+- Did **not** build a Store Locator page, per instruction.
+- Payment/checkout integration remains deferred, as previously discussed — backend is otherwise
+  fully ready; let me know when Razorpay keys are set up and I'll wire it in.

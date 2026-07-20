@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { FiCheckCircle, FiX } from "react-icons/fi";
 import { useSubmitContactMessageMutation } from "@/lib/redux/api";
-import { notifySuccess, notifyError } from "@/lib/utils/notify";
+import { notifyError } from "@/lib/utils/notify";
 
 export default function ContactForm() {
   const [form, setForm] = useState({
@@ -13,6 +14,7 @@ export default function ContactForm() {
     message: "",
   });
   const [submitMessage, { isLoading }] = useSubmitContactMessageMutation();
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const handleChange = (field) => (e) =>
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
@@ -36,8 +38,8 @@ export default function ContactForm() {
         message: form.message,
       }).unwrap();
 
-      notifySuccess("Your message has been sent! We will get back to you soon.");
       setForm({ name: "", email: "", occasion: "", budget: "", message: "" });
+      setShowSuccess(true);
     } catch (err) {
       notifyError(err?.data?.message || "Something went wrong, please try again.");
     }
@@ -129,6 +131,38 @@ export default function ContactForm() {
           </div>
         </form>
       </div>
+
+      {/* Success popup */}
+      {showSuccess && (
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/60 p-4">
+          <div className="relative w-full max-w-sm rounded-2xl bg-white p-8 text-center shadow-2xl">
+            <button
+              onClick={() => setShowSuccess(false)}
+              className="absolute right-5 top-5 text-[#666] hover:text-black"
+              aria-label="Close"
+            >
+              <FiX size={20} />
+            </button>
+
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#e7ede9]">
+              <FiCheckCircle className="text-[36px] text-[#4b6455]" />
+            </div>
+
+            <h3 className="mt-5 font-serif text-2xl text-[#8f0b24]">Message Sent!</h3>
+            <p className="mt-2 text-sm text-[#666]">
+              Thank you for reaching out. We&apos;ve received your message and
+              we&apos;ll get back to you as soon as possible.
+            </p>
+
+            <button
+              onClick={() => setShowSuccess(false)}
+              className="mt-6 w-full rounded-lg bg-[#990027] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#7a0020]"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
