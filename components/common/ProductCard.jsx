@@ -54,7 +54,7 @@ export default function ProductCard({ product }) {
 
           <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent opacity-0 transition duration-500 group-hover:opacity-100" />
 
-          <button
+          <div
             type="button"
             onClick={handleWishlist}
             disabled={wishlistBusy}
@@ -67,7 +67,7 @@ export default function ProductCard({ product }) {
             ) : (
               <FiHeart className="text-[18px]" fill={isInWishlist ? "currentColor" : "none"} />
             )}
-          </button>
+          </div>
         </div>
 
         {/* Content */}
