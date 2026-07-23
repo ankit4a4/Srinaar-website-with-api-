@@ -3,6 +3,7 @@
 import { FiMinus, FiPlus, FiX, FiLoader } from "react-icons/fi";
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import {
   useGetCartQuery,
@@ -12,9 +13,10 @@ import {
 } from "@/lib/redux/api";
 import { selectIsLoggedIn } from "@/lib/redux/authSlice";
 import { useRequireAuth } from "@/lib/redux/useRequireAuth";
-import { notifySuccess, notifyError, notifyInfo } from "@/lib/utils/notify";
+import { notifySuccess, notifyError } from "@/lib/utils/notify";
 
 export default function Cart() {
+  const router = useRouter();
   const isLoggedIn = useSelector(selectIsLoggedIn);
   const requireAuth = useRequireAuth();
   const { data: cart, isLoading } = useGetCartQuery(undefined, { skip: !isLoggedIn });
@@ -78,7 +80,7 @@ export default function Cart() {
 
   const handleCheckout = () => {
     requireAuth(() => {
-      notifyInfo("Checkout and payment (Razorpay) integration is coming soon!");
+      router.push("/checkout");
     });
   };
 

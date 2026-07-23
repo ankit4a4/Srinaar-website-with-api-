@@ -3,11 +3,13 @@
 import { useMemo, useState } from "react";
 import { FiX } from "react-icons/fi";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useGetProductsQuery, useGetCategoriesQuery } from "@/lib/redux/api";
+import { useGetProductsQuery, useGetCategoriesQuery, fileUrl } from "@/lib/redux/api";
 import ProductCard from "@/components/common/ProductCard";
 import ProductCardSkeleton from "@/components/common/ProductCardSkeleton";
+import Pagination from "@/components/common/Pagination";
 
 const MAX_PRICE = 20000;
+const PAGE_SIZE = 12;
 
 export default function ShopProducts({ initialCategory = "" }) {
   const router = useRouter();
@@ -18,6 +20,7 @@ export default function ShopProducts({ initialCategory = "" }) {
   // until then we fall back to the route's initialCategory. This avoids
   // syncing state from a prop via useEffect.
   const [categoryOverride, setCategoryOverride] = useState(null);
+  const [page, setPage] = useState(1);
   const [filters, setFilters] = useState({
     colors: [],
     sizes: [],
@@ -26,15 +29,27 @@ export default function ShopProducts({ initialCategory = "" }) {
   });
 
   const activeCategory = categoryOverride ?? initialCategory;
+  const [resetKey, setResetKey] = useState(`${initialCategory}|${searchQuery}`);
+
+  // Reset to page 1 whenever the category or search changes — computed
+  // during render (not in an effect) by comparing against the last key seen.
+  const currentKey = `${activeCategory}|${searchQuery}`;
+  if (currentKey !== resetKey) {
+    setResetKey(currentKey);
+    if (page !== 1) setPage(1);
+  }
 
   const { data: categoriesData } = useGetCategoriesQuery();
   const { data: productsData, isLoading, isError } = useGetProductsQuery({
     category: activeCategory || undefined,
     search: searchQuery || undefined,
-    limit: 100,
+    page,
+    limit: PAGE_SIZE,
   });
 
   const products = productsData?.products || [];
+  const totalPages = productsData?.pages || 1;
+  const totalResults = productsData?.total || 0;
 
   const clearSearch = () => router.push("/shop");
 
@@ -50,11 +65,15 @@ export default function ShopProducts({ initialCategory = "" }) {
     return flat;
   }, [categoriesData]);
 
-  // Colors/sizes available across the currently-loaded products
+  // Colors/sizes available across the currently-loaded page of products
   const colorOptions = useMemo(() => {
-    const set = new Map();
-    products.forEach((p) => (p.colors || []).forEach((c) => set.set(c, c)));
-    return Array.from(set.values());
+    const map = new Map();
+    products.forEach((p) =>
+      (p.colors || []).forEach((c) => {
+        if (!map.has(c.value)) map.set(c.value, c);
+      })
+    );
+    return Array.from(map.values());
   }, [products]);
 
   const sizeOptions = useMemo(() => {
@@ -82,7 +101,9 @@ export default function ShopProducts({ initialCategory = "" }) {
     let updated = [...products];
 
     if (filters.colors.length > 0) {
-      updated = updated.filter((p) => (p.colors || []).some((c) => filters.colors.includes(c)));
+      updated = updated.filter((p) =>
+        (p.colors || []).some((c) => filters.colors.includes(c.value))
+      );
     }
     if (filters.sizes.length > 0) {
       updated = updated.filter((p) => (p.sizes || []).some((s) => filters.sizes.includes(s)));
@@ -101,7 +122,7 @@ export default function ShopProducts({ initialCategory = "" }) {
       ? [{ type: "category", label: categoryOptions.find((c) => c.id === activeCategory)?.name || "Category", value: activeCategory }]
       : []),
     ...filters.sizes.map((s) => ({ type: "sizes", label: s, value: s })),
-    ...filters.colors.map((c) => ({ type: "colors", label: c, value: c, color: c })),
+    ...filters.colors.map((c) => ({ type: "colors", label: c, value: c })),
   ];
 
   const removeFilterChip = (type, value) => {
@@ -176,20 +197,21 @@ export default function ShopProducts({ initialCategory = "" }) {
                 <h4 className="mb-4 text-[14px] font-semibold text-[#2a1d18]">Color</h4>
                 <div className="flex flex-wrap items-center gap-3">
                   {colorOptions.map((color) => {
-                    const active = filters.colors.includes(color);
+                    const active = filters.colors.includes(color.value);
                     return (
                       <button
-                        key={color}
+                        key={color.value}
                         type="button"
-                        onClick={() => toggleArrayValue("colors", color)}
-                        title={color}
-                        className={`flex h-7 w-7 items-center justify-center rounded-full border transition ${
-                          active ? "border-[#8b5e3c] ring-2 ring-[#d9c1ab]" : "border-gray-300"
+                        onClick={() => toggleArrayValue("colors", color.value)}
+                        title={color.value}
+                        className={`flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border-2 transition ${
+                          active ? "border-[#8b5e3c]" : "border-transparent"
                         }`}
                       >
-                        <span
-                          className="h-5 w-5 rounded-full border border-black/10"
-                          style={{ backgroundColor: color }}
+                        <img
+                          src={fileUrl(color.image)}
+                          alt={color.value}
+                          className="h-full w-full rounded-full object-cover"
                         />
                       </button>
                     );
@@ -226,7 +248,7 @@ export default function ShopProducts({ initialCategory = "" }) {
                 <h2 className="font-serif text-xl text-[#2a1d18]">
                   Search results for &ldquo;{searchQuery}&rdquo;
                   <span className="ml-2 text-sm font-sans text-[#8a776f]">
-                    ({products.length} found)
+                    ({totalResults} found)
                   </span>
                 </h2>
                 <button
@@ -251,12 +273,6 @@ export default function ShopProducts({ initialCategory = "" }) {
                           onClick={() => removeFilterChip(chip.type, chip.value)}
                           className="inline-flex items-center gap-2 border border-[#d8d2c4] bg-[#ece7db] px-3 py-2 text-[12px] text-[#2d2d2d]"
                         >
-                          {chip.color && (
-                            <span
-                              className="h-3 w-3 rounded-full border border-black/10"
-                              style={{ backgroundColor: chip.color }}
-                            />
-                          )}
                           <span>{chip.label}</span>
                           <FiX className="text-[12px]" />
                         </button>
@@ -320,6 +336,10 @@ export default function ShopProducts({ initialCategory = "" }) {
                   Clear all filters
                 </button>
               </div>
+            )}
+
+            {!isLoading && products.length > 0 && (
+              <Pagination page={page} pages={totalPages} onPageChange={setPage} />
             )}
           </div>
         </div>

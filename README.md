@@ -160,3 +160,27 @@ promotional marquee, and all the small page-header banners (Shop/Cart/Wishlist/C
 - Did **not** build a Store Locator page, per instruction.
 - Payment/checkout integration remains deferred, as previously discussed — backend is otherwise
   fully ready; let me know when Razorpay keys are set up and I'll wire it in.
+
+## Update — Round 6: Checkout, Payments, Pagination
+
+- **New `/checkout` page** — select or add a delivery address, choose Cash on Delivery or
+  Pay Online (Razorpay), review order summary, place order. Shows a success screen with a link to
+  My Orders. Cart's "Proceed to Checkout" now goes here instead of a placeholder message.
+- **Razorpay integration** — loads Razorpay's checkout script, creates a server-side order, opens
+  the payment popup, and verifies the payment signature before the order is recorded. No frontend
+  env var needed for this — the key comes from the backend response.
+- **Cash on Delivery** — fully working alternative to online payment, same checkout flow.
+- **Shared `AddressForm`** (`components/profile/AddressForm.jsx`) — used by both the Profile
+  address book and Checkout, so adding an address works the same way in both places.
+- **Real pagination** on the Shop page (12 products/page) and My Orders (5/page in the profile tab)
+  instead of fetching large batches in one go. Fixed a related bug: color filters/swatches on the
+  shop page were still expecting the old plain-string color format; updated to the new
+  `{ value, image }` shape (backend change from an earlier round) — swatches are now small photos
+  instead of plain circles.
+
+### Known trade-off
+Price/color/size filters on the Shop page are still applied client-side, only within the current
+page of results (the backend doesn't support filtering by those yet). This means combining a color
+filter with pagination can show fewer results than expected on a given page. If you want these
+filters to work across the whole catalog, the backend's `GET /api/products` would need `?color=`,
+`?size=`, `?minPrice=`/`?maxPrice=` query support — let me know if you'd like that added.

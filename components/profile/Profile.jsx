@@ -19,6 +19,8 @@ import { notifySuccess, notifyError } from "@/lib/utils/notify";
 import { useGoogleButton } from "@/lib/google/GoogleAuthProvider";
 import WishlistProduct from "@/components/wishlist/WishlistProduct";
 import RecentlyViewedGrid from "@/components/profile/RecentlyViewedGrid";
+import Pagination from "@/components/common/Pagination";
+import AddressForm, { emptyAddressForm } from "@/components/profile/AddressForm";
 
 const TABS = [
   { key: "profile", label: "My Profile", icon: FiUser },
@@ -273,7 +275,9 @@ function ProfileForm({ user }) {
 }
 
 function OrdersPanel() {
-  const { data: orders, isLoading } = useGetMyOrdersQuery();
+  const [page, setPage] = useState(1);
+  const { data, isLoading } = useGetMyOrdersQuery({ page, limit: 5 });
+  const orders = data?.orders || [];
 
   return (
     <div className="rounded-2xl bg-white p-6 shadow-sm sm:p-8">
@@ -287,7 +291,7 @@ function OrdersPanel() {
         </div>
       )}
 
-      {!isLoading && (!orders || orders.length === 0) && (
+      {!isLoading && orders.length === 0 && (
         <div className="py-10 text-center">
           <p className="text-[#8b6f63]">You haven&apos;t placed any orders yet.</p>
           <Link
@@ -300,7 +304,7 @@ function OrdersPanel() {
       )}
 
       <div className="space-y-3">
-        {orders?.map((order) => (
+        {orders.map((order) => (
           <div
             key={order._id}
             className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#eadfd7] px-5 py-4 text-sm"
@@ -312,12 +316,19 @@ function OrdersPanel() {
             <span className="rounded-full bg-[#f6f1ed] px-3 py-1 text-xs font-medium text-[#7f1026]">
               {order.status}
             </span>
+            <span className="text-xs text-[#8b6f63]">
+              {order.paymentMethod} · {order.paymentStatus}
+            </span>
             <span className="font-semibold text-[#990027]">
               ₹{order.amount?.toLocaleString("en-IN")}
             </span>
           </div>
         ))}
       </div>
+
+      {!isLoading && data?.pages > 1 && (
+        <Pagination page={page} pages={data.pages} onPageChange={setPage} />
+      )}
     </div>
   );
 }
@@ -340,17 +351,6 @@ function Field({ label, children }) {
   );
 }
 
-const emptyAddressForm = {
-  label: "Home",
-  fullName: "",
-  phone: "",
-  addressLine1: "",
-  addressLine2: "",
-  city: "",
-  state: "",
-  pincode: "",
-};
-
 function AddressBook() {
   const { data: addresses, isLoading } = useGetAddressesQuery();
   const [addAddress, { isLoading: adding }] = useAddAddressMutation();
@@ -359,38 +359,22 @@ function AddressBook() {
   const [deleteAddress] = useDeleteAddressMutation();
 
   const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState(null);
-  const [form, setForm] = useState(emptyAddressForm);
-
-  const handleChange = (field) => (e) =>
-    setForm((prev) => ({ ...prev, [field]: e.target.value }));
+  const [editingAddress, setEditingAddress] = useState(null);
 
   const openAddForm = () => {
-    setEditingId(null);
-    setForm(emptyAddressForm);
+    setEditingAddress(null);
     setShowForm(true);
   };
 
   const openEditForm = (address) => {
-    setEditingId(address._id);
-    setForm({
-      label: address.label,
-      fullName: address.fullName,
-      phone: address.phone,
-      addressLine1: address.addressLine1,
-      addressLine2: address.addressLine2 || "",
-      city: address.city,
-      state: address.state,
-      pincode: address.pincode,
-    });
+    setEditingAddress(address);
     setShowForm(true);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (form) => {
     try {
-      if (editingId) {
-        await updateAddress({ id: editingId, ...form }).unwrap();
+      if (editingAddress) {
+        await updateAddress({ id: editingAddress._id, ...form }).unwrap();
         notifySuccess("Address updated!");
       } else {
         await addAddress(form).unwrap();
@@ -435,60 +419,28 @@ function AddressBook() {
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="mb-8 rounded-xl border border-[#eadfd7] p-5">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Label">
-              <select value={form.label} onChange={handleChange("label")} className="w-full rounded-xl border-2 border-[#e4d9cd] bg-white px-4 py-3 text-sm text-[#2a1a14] outline-none transition-colors duration-200 focus:border-[#990027] disabled:cursor-not-allowed disabled:bg-[#f6f3ee] disabled:text-[#8b6f63]">
-                <option>Home</option>
-                <option>Work</option>
-                <option>Other</option>
-              </select>
-            </Field>
-            <Field label="Full Name">
-              <input value={form.fullName} onChange={handleChange("fullName")} className="w-full rounded-xl border-2 border-[#e4d9cd] bg-white px-4 py-3 text-sm text-[#2a1a14] outline-none transition-colors duration-200 focus:border-[#990027] disabled:cursor-not-allowed disabled:bg-[#f6f3ee] disabled:text-[#8b6f63]" required />
-            </Field>
-            <Field label="Phone Number">
-              <input value={form.phone} onChange={handleChange("phone")} className="w-full rounded-xl border-2 border-[#e4d9cd] bg-white px-4 py-3 text-sm text-[#2a1a14] outline-none transition-colors duration-200 focus:border-[#990027] disabled:cursor-not-allowed disabled:bg-[#f6f3ee] disabled:text-[#8b6f63]" required />
-            </Field>
-            <Field label="Pincode">
-              <input value={form.pincode} onChange={handleChange("pincode")} className="w-full rounded-xl border-2 border-[#e4d9cd] bg-white px-4 py-3 text-sm text-[#2a1a14] outline-none transition-colors duration-200 focus:border-[#990027] disabled:cursor-not-allowed disabled:bg-[#f6f3ee] disabled:text-[#8b6f63]" required />
-            </Field>
-            <div className="sm:col-span-2">
-              <Field label="Address Line 1">
-                <input value={form.addressLine1} onChange={handleChange("addressLine1")} className="w-full rounded-xl border-2 border-[#e4d9cd] bg-white px-4 py-3 text-sm text-[#2a1a14] outline-none transition-colors duration-200 focus:border-[#990027] disabled:cursor-not-allowed disabled:bg-[#f6f3ee] disabled:text-[#8b6f63]" required />
-              </Field>
-            </div>
-            <div className="sm:col-span-2">
-              <Field label="Address Line 2 (optional)">
-                <input value={form.addressLine2} onChange={handleChange("addressLine2")} className="w-full rounded-xl border-2 border-[#e4d9cd] bg-white px-4 py-3 text-sm text-[#2a1a14] outline-none transition-colors duration-200 focus:border-[#990027] disabled:cursor-not-allowed disabled:bg-[#f6f3ee] disabled:text-[#8b6f63]" />
-              </Field>
-            </div>
-            <Field label="City">
-              <input value={form.city} onChange={handleChange("city")} className="w-full rounded-xl border-2 border-[#e4d9cd] bg-white px-4 py-3 text-sm text-[#2a1a14] outline-none transition-colors duration-200 focus:border-[#990027] disabled:cursor-not-allowed disabled:bg-[#f6f3ee] disabled:text-[#8b6f63]" required />
-            </Field>
-            <Field label="State">
-              <input value={form.state} onChange={handleChange("state")} className="w-full rounded-xl border-2 border-[#e4d9cd] bg-white px-4 py-3 text-sm text-[#2a1a14] outline-none transition-colors duration-200 focus:border-[#990027] disabled:cursor-not-allowed disabled:bg-[#f6f3ee] disabled:text-[#8b6f63]" required />
-            </Field>
-          </div>
-
-          <div className="mt-5 flex gap-3">
-            <button
-              type="submit"
-              disabled={adding || updating}
-              className="flex items-center gap-2 rounded-full bg-[#990027] px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-[#7f0021] disabled:opacity-60"
-            >
-              {(adding || updating) && <FiLoader className="animate-spin text-[14px]" />}
-              {editingId ? "Update Address" : "Save Address"}
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowForm(false)}
-              className="rounded-full border border-[#eadfd7] px-6 py-2.5 text-sm font-medium text-[#4a3730] transition hover:bg-[#f6f3ee]"
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
+        <div className="mb-8">
+          <AddressForm
+            initialValues={
+              editingAddress
+                ? {
+                    label: editingAddress.label,
+                    fullName: editingAddress.fullName,
+                    phone: editingAddress.phone,
+                    addressLine1: editingAddress.addressLine1,
+                    addressLine2: editingAddress.addressLine2 || "",
+                    city: editingAddress.city,
+                    state: editingAddress.state,
+                    pincode: editingAddress.pincode,
+                  }
+                : emptyAddressForm
+            }
+            onSubmit={handleSubmit}
+            onCancel={() => setShowForm(false)}
+            submitting={adding || updating}
+            submitLabel={editingAddress ? "Update Address" : "Save Address"}
+          />
+        </div>
       )}
 
       {isLoading && (
