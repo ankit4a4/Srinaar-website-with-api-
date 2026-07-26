@@ -17,6 +17,7 @@ import { selectIsLoggedIn, selectUser } from "@/lib/redux/authSlice";
 import { useGoogleButton } from "@/lib/google/GoogleAuthProvider";
 import { useRazorpayScript } from "@/lib/utils/useRazorpayScript";
 import { notifySuccess, notifyError } from "@/lib/utils/notify";
+import { findColorSwatch } from "@/lib/utils/colorImage";
 import AddressForm, { emptyAddressForm } from "@/components/profile/AddressForm";
 
 const formatAddress = (a) =>
@@ -352,7 +353,11 @@ export default function Checkout() {
               {cartItems.map((item) => (
                 <div key={item._id} className="flex items-center gap-3">
                   <img
-                    src={fileUrl(item.product?.images?.[0]) || "https://placehold.co/80x100?text=Srinaar"}
+                    src={
+                      fileUrl(findColorSwatch(item.product, item.color)?.image) ||
+                      fileUrl(item.product?.images?.[0]) ||
+                      "https://placehold.co/80x100?text=Srinaar"
+                    }
                     alt={item.product?.name}
                     className="h-14 w-11 rounded-lg object-cover"
                   />
@@ -361,6 +366,7 @@ export default function Checkout() {
                     <p className="text-[#8b6f63]">
                       Qty: {item.quantity}
                       {item.size ? ` · ${item.size}` : ""}
+                      {item.color ? ` · ${item.color}` : ""}
                     </p>
                   </div>
                   <p className="text-sm font-semibold text-[#2a1a14]">

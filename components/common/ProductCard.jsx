@@ -56,7 +56,13 @@ export default function ProductCard({ product }) {
 
           <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent opacity-0 transition duration-500 group-hover:opacity-100" />
 
-          <div
+          {product.stock === 0 && (
+            <span className="absolute left-3 top-3 z-20 rounded-full bg-[#2a1a14]/85 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-white">
+              Out of Stock
+            </span>
+          )}
+
+          <button
             type="button"
             onClick={handleWishlist}
             disabled={wishlistBusy}
@@ -69,7 +75,7 @@ export default function ProductCard({ product }) {
             ) : (
               <FiHeart className="text-[18px]" fill={isInWishlist ? "currentColor" : "none"} />
             )}
-          </div>
+          </button>
         </div>
 
         {/* Content */}
