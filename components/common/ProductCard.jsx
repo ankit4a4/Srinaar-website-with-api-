@@ -62,7 +62,7 @@ export default function ProductCard({ product }) {
             </span>
           )}
 
-          <button
+          <div
             type="button"
             onClick={handleWishlist}
             disabled={wishlistBusy}
@@ -75,7 +75,7 @@ export default function ProductCard({ product }) {
             ) : (
               <FiHeart className="text-[18px]" fill={isInWishlist ? "currentColor" : "none"} />
             )}
-          </button>
+          </div>
         </div>
 
         {/* Content */}
