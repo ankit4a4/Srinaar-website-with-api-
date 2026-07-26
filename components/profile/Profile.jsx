@@ -11,11 +11,23 @@ import {
   FiLock,
   FiLogOut,
   FiLoader,
+  FiChevronDown,
 } from "react-icons/fi";
 import { useDispatch, useSelector } from "react-redux";
 import { selectUser, logout, updateUser } from "@/lib/redux/authSlice";
-import { useUpdateProfileMutation, useGetMyOrdersQuery, useGetAddressesQuery, useAddAddressMutation, useUpdateAddressMutation, useSetDefaultAddressMutation, useDeleteAddressMutation } from "@/lib/redux/api";
+import {
+  useUpdateProfileMutation,
+  useGetMyOrdersQuery,
+  useCancelMyOrderMutation,
+  useGetAddressesQuery,
+  useAddAddressMutation,
+  useUpdateAddressMutation,
+  useSetDefaultAddressMutation,
+  useDeleteAddressMutation,
+  fileUrl,
+} from "@/lib/redux/api";
 import { notifySuccess, notifyError } from "@/lib/utils/notify";
+import { resolveItemImage } from "@/lib/utils/colorImage";
 import { useGoogleButton } from "@/lib/google/GoogleAuthProvider";
 import WishlistProduct from "@/components/wishlist/WishlistProduct";
 import RecentlyViewedGrid from "@/components/profile/RecentlyViewedGrid";
@@ -274,6 +286,115 @@ function ProfileForm({ user }) {
   );
 }
 
+const STATUS_STYLE = {
+  Delivered: "bg-[#e7ede9] text-[#4b6455]",
+  Processing: "bg-[#fbeecb] text-[#8a6a1f]",
+  Shipped: "bg-[#f6e9ec] text-[#7f1026]",
+  Cancelled: "bg-[#f7e9e6] text-[#a63a2e]",
+  Pending: "bg-[#f0ece6] text-[#7d7272]",
+};
+
+function OrderCard({ order }) {
+  const [expanded, setExpanded] = useState(false);
+  const [cancelMyOrder, { isLoading: cancelling }] = useCancelMyOrderMutation();
+
+  const canCancel = ["Pending", "Processing"].includes(order.status);
+
+  const handleCancel = async () => {
+    if (!confirm("Are you sure you want to cancel this order?")) return;
+    try {
+      await cancelMyOrder(order._id).unwrap();
+      notifySuccess("Order cancelled.");
+    } catch (err) {
+      notifyError(err?.data?.message || "Could not cancel this order.");
+    }
+  };
+
+  return (
+    <div className="rounded-xl border border-[#eadfd7] overflow-hidden">
+      {/* Header */}
+      <button
+        onClick={() => setExpanded((v) => !v)}
+        className="flex w-full flex-wrap items-center justify-between gap-2 px-5 py-4 text-sm text-left"
+      >
+        <span className="font-semibold text-[#2a1a14]">{order.orderId}</span>
+        <span className="text-[#8b6f63]">
+          {new Date(order.createdAt).toLocaleDateString("en-IN")}
+        </span>
+        <span
+          className={`rounded-full px-3 py-1 text-xs font-medium ${
+            STATUS_STYLE[order.status] || STATUS_STYLE.Pending
+          }`}
+        >
+          {order.status}
+        </span>
+        <span className="text-xs text-[#8b6f63]">
+          {order.paymentMethod} · {order.paymentStatus}
+        </span>
+        <span className="font-semibold text-[#990027]">
+          ₹{order.amount?.toLocaleString("en-IN")}
+        </span>
+        <FiChevronDown
+          className={`text-[#8b6f63] transition-transform duration-300 ${
+            expanded ? "rotate-180" : ""
+          }`}
+        />
+      </button>
+
+      {/* Details */}
+      <div
+        className={`grid transition-all duration-300 ${
+          expanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+        }`}
+      >
+        <div className="overflow-hidden">
+          <div className="border-t border-[#eadfd7] bg-[#fbf8f5] px-5 py-4">
+            <div className="space-y-3">
+              {order.items?.map((item, i) => {
+                const image = resolveItemImage(item, fileUrl) || "https://placehold.co/100x120?text=Srinaar";
+                return (
+                  <div key={i} className="flex items-center gap-3">
+                    <img src={image} alt={item.name} className="h-14 w-11 rounded-lg object-cover" />
+                    <div className="min-w-0 flex-1 text-sm">
+                      <p className="line-clamp-1 font-medium text-[#2a1a14]">{item.name}</p>
+                      <p className="text-[#8b6f63]">
+                        Qty: {item.quantity}
+                        {item.size ? ` · Size: ${item.size}` : ""}
+                        {item.color ? ` · ${item.color}` : ""}
+                      </p>
+                    </div>
+                    <p className="text-sm font-semibold text-[#2a1a14]">
+                      ₹{(item.price * item.quantity).toLocaleString("en-IN")}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="my-4 h-px w-full bg-[#eadfd7]" />
+
+            <p className="text-sm text-[#8b6f63]">
+              <span className="font-medium text-[#2a1a14]">Delivery Address: </span>
+              {order.address}
+            </p>
+
+            {canCancel && (
+              <button
+                onClick={handleCancel}
+                disabled={cancelling}
+                className="mt-4 flex items-center gap-2 rounded-full border border-[#a63a2e] px-5 py-2 text-xs font-semibold text-[#a63a2e] transition hover:bg-[#a63a2e] hover:text-white disabled:opacity-50"
+              >
+                {cancelling && <FiLoader className="animate-spin text-[13px]" />}
+                Cancel Order
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function OrdersPanel() {
   const [page, setPage] = useState(1);
   const { data, isLoading } = useGetMyOrdersQuery({ page, limit: 5 });
@@ -305,24 +426,7 @@ function OrdersPanel() {
 
       <div className="space-y-3">
         {orders.map((order) => (
-          <div
-            key={order._id}
-            className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#eadfd7] px-5 py-4 text-sm"
-          >
-            <span className="font-semibold text-[#2a1a14]">{order.orderId}</span>
-            <span className="text-[#8b6f63]">
-              {new Date(order.createdAt).toLocaleDateString("en-IN")}
-            </span>
-            <span className="rounded-full bg-[#f6f1ed] px-3 py-1 text-xs font-medium text-[#7f1026]">
-              {order.status}
-            </span>
-            <span className="text-xs text-[#8b6f63]">
-              {order.paymentMethod} · {order.paymentStatus}
-            </span>
-            <span className="font-semibold text-[#990027]">
-              ₹{order.amount?.toLocaleString("en-IN")}
-            </span>
-          </div>
+          <OrderCard key={order._id} order={order} />
         ))}
       </div>
 

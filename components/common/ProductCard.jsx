@@ -49,7 +49,9 @@ export default function ProductCard({ product }) {
           <img
             src={fileUrl(product.images?.[0]) || "https://placehold.co/600x800?text=Srinaar"}
             alt={product.name}
-            className="absolute inset-0 h-full w-full object-cover object-top transition duration-700 ease-out group-hover:scale-[1.06]"
+            className={`absolute inset-0 h-full w-full object-cover object-top transition duration-700 ease-out group-hover:scale-[1.06] ${
+              product.stock === 0 ? "grayscale-[30%] opacity-80" : ""
+            }`}
           />
 
           <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent opacity-0 transition duration-500 group-hover:opacity-100" />

@@ -184,3 +184,19 @@ page of results (the backend doesn't support filtering by those yet). This means
 filter with pagination can show fewer results than expected on a given page. If you want these
 filters to work across the whole catalog, the backend's `GET /api/products` would need `?color=`,
 `?size=`, `?minPrice=`/`?maxPrice=` query support — let me know if you'd like that added.
+
+## Update — Round 7: Full order details, cancel order, stock awareness
+
+- **My Orders** (profile page) — completely rebuilt. Each order is now an expandable card:
+  collapsed view shows order ID, date, status, payment info, and total; expanding it shows every
+  item with its actual photo (the exact color purchased, not just the product's default image),
+  size, quantity, and price, plus the delivery address.
+- **Cancel Order** — while an order is still Pending or Processing, a "Cancel Order" button
+  appears in the expanded view. Once it's shipped, cancellation is no longer available (matches
+  the backend's rule).
+- **Cart & Checkout** — line items now show the actual color-swatch photo (not just the product's
+  main image) next to the chosen color name, so what you see in your cart matches what you
+  selected on the product page.
+- **Out of Stock** — product cards (home, shop, wishlist, etc.) now show a clear "Out of Stock"
+  badge and a slightly dimmed photo when stock reaches zero, since stock is now a real, live
+  number that decreases as orders come in.

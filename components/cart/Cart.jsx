@@ -14,6 +14,7 @@ import {
 import { selectIsLoggedIn } from "@/lib/redux/authSlice";
 import { useRequireAuth } from "@/lib/redux/useRequireAuth";
 import { notifySuccess, notifyError } from "@/lib/utils/notify";
+import { findColorSwatch } from "@/lib/utils/colorImage";
 
 export default function Cart() {
   const router = useRouter();
@@ -156,7 +157,11 @@ export default function Cart() {
                       <div className="flex min-w-0 items-center gap-4">
                         <div className="relative h-20 w-16 overflow-hidden rounded-xl bg-[#f8f4f1] sm:h-24 sm:w-20">
                           <img
-                            src={fileUrl(item.product?.images?.[0]) || "https://placehold.co/200x260?text=Srinaar"}
+                            src={
+                              fileUrl(findColorSwatch(item.product, item.color)?.image) ||
+                              fileUrl(item.product?.images?.[0]) ||
+                              "https://placehold.co/200x260?text=Srinaar"
+                            }
                             alt={item.product?.name}
                             className="absolute inset-0 h-full w-full object-cover"
                           />
@@ -168,9 +173,21 @@ export default function Cart() {
                               {item.product?.name}
                             </h3>
                           </Link>
-                          <p className="mt-1 text-sm text-[#8b6f63]">
-                            {item.size ? `Size: ${item.size}` : ""} {item.color ? `· ${item.color}` : ""}
-                          </p>
+                          <div className="mt-1.5 flex flex-wrap items-center gap-2 text-sm text-[#8b6f63]">
+                            {item.size && <span>Size: {item.size}</span>}
+                            {item.color && (
+                              <span className="flex items-center gap-1.5">
+                                {findColorSwatch(item.product, item.color)?.image && (
+                                  <img
+                                    src={fileUrl(findColorSwatch(item.product, item.color).image)}
+                                    alt={item.color}
+                                    className="h-4 w-4 rounded-full object-cover"
+                                  />
+                                )}
+                                {item.color}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
