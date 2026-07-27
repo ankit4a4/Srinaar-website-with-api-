@@ -44,36 +44,31 @@ const menuClass =
  * - Opens directly below the nav item
  * - Lists main categories vertically
  * - Hovering a main category flies out its subcategories to the right
+ *
+ * Uses pure CSS `group-hover` (not JS onMouseEnter/onMouseLeave state) for the
+ * open/close behavior — this is deliberate. A JS-state approach here is prone
+ * to the mouse "leaving" the trigger element while crossing the small gap
+ * between the button and the dropdown panel, firing onMouseLeave and closing
+ * the menu before the user ever reaches it. `group-hover` has no such gap
+ * problem: as long as the cursor is anywhere over the trigger OR any of its
+ * descendants (including the panel), the hover state stays active.
  */
-function CollectionsDropdown({ open, setOpen, categories, loading, textColor, underlineColor }) {
+function CollectionsDropdown({ categories, loading, textColor, underlineColor }) {
   const [manualActiveMain, setManualActiveMain] = useState(null);
   const hasCategories = categories && categories.length > 0;
 
-  // Default to the first category until the user hovers a different one —
-  // avoids syncing state from a prop/derived value inside an effect.
-  const activeMain = open ? manualActiveMain ?? categories?.[0]?._id ?? null : null;
+  const activeMain = manualActiveMain ?? categories?.[0]?._id ?? null;
   const currentMain = categories?.find((c) => c._id === activeMain);
 
-  const handleClose = () => {
-    setOpen(false);
-    setManualActiveMain(null);
-  };
-
   return (
-    <div
-      className="relative"
-      onMouseEnter={() => setOpen(true)}
-      onMouseLeave={handleClose}
-    >
+    <div className="group relative">
       <button className={`${menuClass} ${underlineColor} flex items-center gap-1 ${textColor}`}>
         Collections
         <FiChevronDown className="text-[13px]" />
       </button>
 
       <div
-        className={`absolute top-full left-0 pt-3 transition-all duration-200 ${
-          open ? "visible translate-y-0 opacity-100" : "invisible -translate-y-2 opacity-0"
-        }`}
+        className="invisible absolute top-full left-0 z-30 -translate-y-2 pt-3 opacity-0 transition-all duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100"
       >
         <div className="flex overflow-hidden rounded-xl border border-black/10 bg-white shadow-[0_20px_50px_rgba(0,0,0,0.18)]">
           {/* LEFT: main categories */}
@@ -195,8 +190,6 @@ function SearchBox({ light = true }) {
 }
 
 function DesktopNav({
-  collectionsOpen,
-  setCollectionsOpen,
   categories,
   categoriesLoading,
   isTransparentState,
@@ -214,8 +207,6 @@ function DesktopNav({
         ))}
 
         <CollectionsDropdown
-          open={collectionsOpen}
-          setOpen={setCollectionsOpen}
           categories={categories}
           loading={categoriesLoading}
           textColor="text-white"
@@ -289,8 +280,6 @@ function MobileTopBar({ setMobileMenu, isTransparentState, cartCount, wishlistCo
 }
 
 function HeaderContent({
-  collectionsOpen,
-  setCollectionsOpen,
   categories,
   categoriesLoading,
   setMobileMenu,
@@ -301,8 +290,6 @@ function HeaderContent({
   return (
     <div className="px-4 lg:px-6">
       <DesktopNav
-        collectionsOpen={collectionsOpen}
-        setCollectionsOpen={setCollectionsOpen}
         categories={categories}
         categoriesLoading={categoriesLoading}
         isTransparentState={isTransparentState}
@@ -322,7 +309,6 @@ function HeaderContent({
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
-  const [collectionsOpen, setCollectionsOpen] = useState(false);
   const [mobileCollectionsOpen, setMobileCollectionsOpen] = useState(false);
 
   const pathname = usePathname();
@@ -355,8 +341,6 @@ export default function Header() {
         >
           <div className="max-w-7xl mx-auto">
             <HeaderContent
-              collectionsOpen={collectionsOpen}
-              setCollectionsOpen={setCollectionsOpen}
               categories={categories}
               categoriesLoading={categoriesLoading}
               setMobileMenu={setMobileMenu}
@@ -377,8 +361,6 @@ export default function Header() {
         >
           <div className="max-w-7xl mx-auto pointer-events-auto rounded-2xl bg-gradient-to-b from-[#990027] to-[#590c19] shadow-[0_10px_40px_rgba(0,0,0,0.20)] py-3">
             <HeaderContent
-              collectionsOpen={collectionsOpen}
-              setCollectionsOpen={setCollectionsOpen}
               categories={categories}
               categoriesLoading={categoriesLoading}
               setMobileMenu={setMobileMenu}
